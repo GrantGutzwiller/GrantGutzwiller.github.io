@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Task Atlas — The $10 Trillion Activity Map by Task">
+    <meta property="og:title" content="Task Atlas — Grant Gutzwiller">
+    <meta property="og:description" content="Explore the $10 trillion activity map of U.S. wages by task, in a monochrome dashboard.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>Task Atlas | Grant Gutzwiller</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Task Atlas monochrome styles -->
+    <style>
+      :root {
+        /* Monochrome palette for Task Atlas (light background) */
+        --tam-bg: #ffffff;
+        --tam-surface: #f7f7f7;
+        --tam-surface2: #f0f0f0;
+        --tam-border: #e0e0e0;
+        --tam-text: #1f2933;
+        --tam-text-dim: #6b7280;
+        --tam-accent: #000000;
+        --tam-accent-soft: #4b5563;
+      }
+
+      body.task-tam {
+        background: var(--tam-bg);
+        color: var(--tam-text);
+      }
+
+      .tam-hero {
+        background: #ffffff;
+        padding: 60px 20px 40px;
+        text-align: center;
+        border-bottom: 1px solid var(--tam-border);
+      }
+
+      .tam-hero h1 {
+        font-size: 2.8em;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--tam-accent);
+        margin-bottom: 12px;
+      }
+
+      .tam-hero .subtitle {
+        font-size: 1.1em;
+        color: var(--tam-text-dim);
+        max-width: 720px;
+        margin: 0 auto 30px;
+      }
+
+      .tam-stats-row {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin: 20px auto;
+        max-width: 1200px;
+      }
+
+      .tam-stat-card {
+        background: var(--tam-surface);
+        border: 1px solid var(--tam-border);
+        border-radius: 12px;
+        padding: 18px 24px;
+        min-width: 180px;
+        text-align: center;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 8px 24px rgba(0, 0, 0, 0.04);
+      }
+
+      .tam-stat-card .number {
+        font-size: 1.9em;
+        font-weight: 700;
+        color: var(--tam-accent);
+      }
+
+      .tam-stat-card .label {
+        font-size: 0.8rem;
+        color: var(--tam-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 4px;
+      }
+
+      .tam-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 20px 40px;
+      }
+
+      .tam-nav-tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--tam-surface);
+        border-radius: 999px;
+        padding: 4px;
+        margin: 30px 0 20px;
+        overflow-x: auto;
+      }
+
+      .tam-nav-tab {
+        padding: 10px 20px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--tam-text-dim);
+        border: none;
+        background: transparent;
+        white-space: nowrap;
+        transition: background-color 0.2s, color 0.2s;
+        /* Keep font-weight consistent to prevent width changes during transition */
+      }
+
+      .tam-nav-tab:hover {
+        color: var(--tam-text);
+        background: var(--tam-surface2);
+      }
+
+      .tam-nav-tab.active {
+        background: var(--tam-accent);
+        color: #FFFFFF;
+        font-weight: 500;
+        /* Use subtle text-shadow for emphasis instead of bold to prevent width change */
+        text-shadow: 0 0 0.5px rgba(255, 255, 255, 0.3);
+      }
+
+      .tam-panel {
+        display: none;
+      }
+
+      .tam-panel.active {
+        display: block;
+      }
+
+      .tam-card {
+        background: var(--tam-surface);
+        border: 1px solid var(--tam-border);
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 8px 24px rgba(0, 0, 0, 0.03);
+      }
+
+      .tam-card h2 {
+        font-size: 1.15rem;
+        margin-bottom: 12px;
+        color: var(--tam-accent);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+
+      .tam-card h3 {
+        font-size: 1.05rem;
+        margin-bottom: 10px;
+        color: var(--tam-text);
+      }
+
+      .tam-search-box {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--tam-border);
+        background: var(--tam-surface2);
+        color: var(--tam-text);
+        font-size: 0.95rem;
+        margin-bottom: 14px;
+        outline: none;
+      }
+
+      .tam-search-box:focus {
+        border-color: var(--tam-accent-soft);
+        box-shadow: 0 0 0 1px var(--tam-accent-soft);
+      }
+
+      .tam-search-box::placeholder {
+        color: var(--tam-text-dim);
+      }
+
+      .tam-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+
+      .tam-filter-btn {
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        border: 1px solid #cccccc;
+        background: #f5f5f5;
+        color: #333333;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+
+      .tam-filter-btn:hover {
+        border-color: #999999;
+        background: #e5e5e5;
+        color: #000000;
+      }
+
+      .tam-filter-btn.active {
+        background: var(--tam-accent);
+        color: #FFFFFF;
+        border-color: var(--tam-accent);
+        font-weight: 600;
+      }
+
+      .tam-table-wrap {
+        max-height: 600px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid rgba(43, 45, 66, 0.1);
+        background: #FFFFFF;
+      }
+
+      .tam-table-wrap::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      .tam-table-wrap::-webkit-scrollbar-track {
+        background: #F5F5F5;
+      }
+
+      .tam-table-wrap::-webkit-scrollbar-thumb {
+        background: #999999;
+        border-radius: 4px;
+      }
+
+      .tam-table-wrap::-webkit-scrollbar-thumb:hover {
+        background: #333333;
+      }
+
+      .tam-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+      }
+
+      /* Prevent column width changes by ensuring consistent spacing */
+      .tam-table th,
+      .tam-table td {
+        box-sizing: border-box;
+      }
+
+      .tam-table th {
+        text-align: left;
+        padding: 12px 10px;
+        border-bottom: 2px solid #333333;
+        color: #333333;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        user-select: none;
+        position: sticky;
+        top: 0;
+        background: #FFFFFF;
+        z-index: 10;
+        white-space: nowrap;
+        min-width: 80px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .tam-table th:hover {
+        background: #F5F5F5;
+        color: #000000;
+      }
+
+      .tam-table th.sorted {
+        color: #000000;
+        background: #F5F5F5;
+        font-weight: 700;
+      }
+
+      .tam-table th .sort-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 6px;
+        font-size: 0.75em;
+        font-weight: 700;
+        width: 16px;
+        min-width: 16px;
+        max-width: 16px;
+        height: 16px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        vertical-align: middle;
+        line-height: 1;
+        /* Force fixed dimensions - prevent any content from changing size */
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+
+      /* Always show an invisible placeholder when empty to maintain width */
+      .tam-table th .sort-indicator:empty::before {
+        content: '↑';
+        opacity: 0;
+        width: 100%;
+        text-align: center;
+      }
+
+      .tam-table th:hover .sort-indicator {
+        opacity: 0.3;
+      }
+
+      .tam-table th.sorted .sort-indicator {
+        opacity: 1;
+        color: #000000;
+      }
+
+      .tam-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid rgba(43, 45, 66, 0.1);
+        font-size: 0.9rem;
+        vertical-align: top;
+        color: #333333;
+      }
+
+      .tam-row-hover:hover td {
+        background: rgba(43, 45, 66, 0.03);
+      }
+
+      .tam-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        border: 1px solid var(--tam-border);
+        color: var(--tam-text-dim);
+        margin: 2px 2px 2px 0;
+        white-space: nowrap;
+      }
+
+      .tam-badge-strong {
+        border-color: var(--tam-accent-soft);
+        color: var(--tam-accent-soft);
+      }
+
+      /* Container for multiple badges */
+      .tam-badge-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .tam-exposure-bar {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--tam-surface2);
+        overflow: hidden;
+        min-width: 80px;
+      }
+
+      .tam-exposure-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--tam-accent-soft);
+        transition: width 0.25s ease-out;
+      }
+
+      /* Modal Overlay Styles */
+      .tam-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .tam-modal-overlay.show {
+        display: flex;
+      }
+
+      .tam-modal {
+        background: var(--white);
+        border-radius: 12px;
+        max-width: 900px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        position: relative;
+        margin: auto;
+      }
+
+      .tam-modal-header {
+        position: sticky;
+        top: 0;
+        background: var(--white);
+        border-bottom: 1px solid rgba(43, 45, 66, 0.1);
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1;
+      }
+
+      .tam-modal-header h2 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: var(--dark-gray);
+        font-weight: 600;
+      }
+
+      .tam-modal-close {
+        background: none;
+        border: none;
+        color: var(--dark-gray);
+        font-size: 2em;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: var(--transition);
+      }
+
+      .tam-modal-close:hover {
+        background: rgba(43, 45, 66, 0.1);
+      }
+
+      .tam-modal-content {
+        padding: 24px;
+      }
+
+      /* Loading state */
+      .tam-loading {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--dark-gray);
+      }
+
+      .tam-loading::after {
+        content: '...';
+        animation: dots 1.5s steps(4, end) infinite;
+      }
+
+      @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+      }
+
+      .tam-chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .tam-chart-container {
+        position: relative;
+        height: 380px;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .tam-chart-container-tall {
+        position: relative;
+        height: 560px;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .tam-chart-container-equal {
+        position: relative;
+        height: 450px;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      /* Custom legend styling for scatter chart - force even two-row layout */
+      .tam-chart-container-tall:has(#tam-scatterChart) canvas ~ div,
+      .tam-chart-container-tall:has(#tam-scatterChart) > div:first-of-type {
+        /* Target legend container */
+      }
+
+      /* Custom legend for scatter chart - 4 items then 3 using flexbox rows */
+      .tam-custom-legend {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 10px 0 !important;
+        max-width: 450px !important;
+        margin: 0 auto 10px auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      .tam-legend-row {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+
+      .tam-legend-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+      }
+
+      .tam-legend-dot {
+        width: 10px !important;
+        height: 10px !important;
+        border-radius: 50% !important;
+        display: inline-block !important;
+        flex-shrink: 0 !important;
+      }
+
+      .tam-legend-label {
+        font-size: 10px !important;
+        color: #333333 !important;
+        white-space: nowrap !important;
+      }
+
+
+      .tam-insight-box {
+        background: linear-gradient(135deg, #ffffff, #f5f5f5);
+        border: 1px solid var(--tam-border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .tam-insight-title {
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        color: var(--tam-accent-soft);
+        margin-bottom: 8px;
+      }
+
+      .tam-text-dim {
+        color: var(--tam-text-dim);
+      }
+
+      .tam-text-right {
+        text-align: right;
+      }
+
+      .tam-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        color: var(--tam-text-dim);
+        font-size: 0.85rem;
+      }
+
+      .tam-pagination button {
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--tam-border);
+        background: var(--tam-surface2);
+        color: var(--tam-text);
+        cursor: pointer;
+        font-size: 0.8rem;
+      }
+
+      .tam-pagination button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      .tam-pagination button:hover:not(:disabled) {
+        border-color: var(--tam-accent-soft);
+      }
+
+      .tam-methodology {
+        font-size: 0.88rem;
+        color: var(--tam-text-dim);
+        line-height: 1.8;
+      }
+
+      .tam-methodology h3 {
+        color: var(--tam-text);
+        margin: 18px 0 8px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .tam-footer {
+        text-align: center;
+        padding: 32px 20px 0;
+        color: var(--tam-text-dim);
+        font-size: 0.8rem;
+        border-top: 1px solid var(--tam-border);
+        margin-top: 36px;
+      }
+
+      @media (max-width: 900px) {
+        .tam-chart-grid {
+          grid-template-columns: 1fr;
+        }
+        .tam-hero {
+          padding: 40px 16px 28px;
+        }
+        .tam-hero h1 {
+          font-size: 2.1rem;
+        }
+        .tam-hero .subtitle {
+          font-size: 0.95rem;
+        }
+        .tam-container {
+          padding: 20px 16px 32px;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .tam-stats-row {
+          gap: 12px;
+        }
+        .tam-stat-card {
+          padding: 14px 16px;
+          min-width: 150px;
+        }
+        .tam-chart-container,
+        .tam-chart-container-tall {
+          height: 320px;
+        }
+      }
+    </style>
+</head>
+<body class="task-tam">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="logo">Grant</a>
+        <div class="nav-links">
+            <a href="gallery.html">Gallery</a>
+            <a href="bookshelf.html">Bookshelf</a>
+            <a href="essays.html">Essays</a>
+            <a href="task_tam.html">Task Atlas</a>
+            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank">LinkedIn</a>
+        </div>
+    </nav>
+
+    <main>
+      <!-- Task Atlas dashboard content (adapted from O*NET/activity_map_dashboard.html) -->
+      <section class="tam-hero">
+        <h1>Task Atlas</h1>
+        <p class="subtitle">A task-level map of U.S. labor value showing where wages concentrate and where LLM task exposure is highest.</p>
+        <div class="tam-stats-row">
+          <div class="tam-stat-card">
+            <div class="number">$10.47T</div>
+            <div class="label">Total Wage Bill Mapped</div>
+          </div>
+          <div class="tam-stat-card">
+            <div class="number">2,073</div>
+            <div class="label">Work Activities</div>
+          </div>
+          <div class="tam-stat-card">
+            <div class="number">831</div>
+            <div class="label">Occupations</div>
+          </div>
+          <div class="tam-stat-card">
+            <div class="number">52.9%</div>
+            <div class="label">High-Exposure Wages</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tam-container">
+        <div class="tam-nav-tabs">
+          <button class="tam-nav-tab active" data-panel="tam-overview">Overview</button>
+          <button class="tam-nav-tab" data-panel="tam-activities">Activity Explorer</button>
+          <button class="tam-nav-tab" data-panel="tam-occupations">Occupation Explorer</button>
+          <button class="tam-nav-tab" data-panel="tam-exposure">LLM Task Exposure</button>
+          <button class="tam-nav-tab" data-panel="tam-concentration">Value Concentration</button>
+          <button class="tam-nav-tab" data-panel="tam-methodology">Methodology</button>
+        </div>
+
+        <!-- OVERVIEW PANEL -->
+        <div id="tam-overview" class="tam-panel active">
+          <div id="tam-loading-indicator" class="tam-loading" style="display:none;">Loading data</div>
+          <div class="tam-insight-box">
+            <div class="tam-insight-title">The Project</div>
+            <p>O*NET organizes the economy by job title and the bundles of activities that make them up. LLM capability gains are mapped at the task level first, then aggregated to activities and occupations. Exposure here means potential for faster task completion at similar quality, not guaranteed adoption, displacement, or replacement. This dashboard maps $10.47 trillion in U.S. wages across 2,073 specific work activities, revealing where economic value actually concentrates and which activities face the greatest LLM task exposure.</p>
+          </div>
+
+          <div class="tam-chart-grid">
+            <div class="tam-card">
+              <h2>Value by Task Type</h2>
+              <div class="tam-chart-container">
+                <canvas id="tam-taskTypeChart"></canvas>
+              </div>
+            </div>
+            <div class="tam-card">
+              <h2>LLM Task Exposure Distribution</h2>
+              <div class="tam-chart-container">
+                <canvas id="tam-exposureDistChart"></canvas>
+              </div>
+            </div>
+            <div class="tam-card">
+              <h2>Top 20 Activities by Value</h2>
+              <div class="tam-chart-container-tall">
+                <canvas id="tam-topDwaChart"></canvas>
+              </div>
+            </div>
+            <div class="tam-card">
+              <h2>LLM Task Exposure vs. Economic Value</h2>
+              <div class="tam-chart-container-tall">
+                <canvas id="tam-scatterChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITY EXPLORER PANEL -->
+        <div id="tam-activities" class="tam-panel">
+
+          <div class="tam-card">
+            <h2>Search All 2,073 Work Activities</h2>
+            <input type="text" class="tam-search-box" id="tam-dwa-search" placeholder="Search activities... e.g. 'analyze data', 'patient', 'cook', 'software', 'supervise'">
+            <div class="tam-filters">
+              <button class="tam-filter-btn active" data-filter="all">All</button>
+              <button class="tam-filter-btn" data-filter="High">High Exposure</button>
+              <button class="tam-filter-btn" data-filter="Medium-High">Med-High Exposure</button>
+              <button class="tam-filter-btn" data-filter="Medium">Medium Exposure</button>
+              <button class="tam-filter-btn" data-filter="Low-Medium">Low-Med Exposure</button>
+              <button class="tam-filter-btn" data-filter="Low">Low Exposure</button>
+              <span style="margin-left:10px;color:#999999;font-size:0.85em;">|</span>
+              <button class="tam-filter-btn" data-filter-type="cognitive_routine">Cognitive Routine</button>
+              <button class="tam-filter-btn" data-filter-type="cognitive_analytical">Analytical</button>
+              <button class="tam-filter-btn" data-filter-type="creative">Creative</button>
+              <button class="tam-filter-btn" data-filter-type="interpersonal">Interpersonal</button>
+              <button class="tam-filter-btn" data-filter-type="physical_routine">Physical</button>
+              <button class="tam-filter-btn" data-filter-type="physical_skilled">Skilled Physical</button>
+              <button class="tam-filter-btn" data-filter-type="supervisory">Supervisory</button>
+            </div>
+
+            <div class="tam-pagination">
+              <span id="tam-dwa-count">Showing 2,073 activities</span>
+              <div>
+                <button id="tam-dwa-prev">Prev</button>
+                <span id="tam-dwa-page-info" style="margin:0 10px;"></span>
+                <button id="tam-dwa-next">Next</button>
+              </div>
+            </div>
+
+            <div class="tam-table-wrap">
+              <table class="tam-table" id="tam-dwa-table">
+                <thead>
+                  <tr>
+                    <th data-sort="rank"># <span class="sort-indicator"></span></th>
+                    <th data-sort="title">Activity <span class="sort-indicator"></span></th>
+                    <th data-sort="gwa">Category (GWA) <span class="sort-indicator"></span></th>
+                    <th data-sort="value" class="tam-text-right">Value <span class="sort-indicator"></span></th>
+                    <th data-sort="share" class="tam-text-right">Share <span class="sort-indicator"></span></th>
+                    <th data-sort="ai_score">LLM Task Exposure <span class="sort-indicator"></span></th>
+                    <th data-sort="task_type">Type <span class="sort-indicator"></span></th>
+                  </tr>
+                </thead>
+                <tbody id="tam-dwa-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="tam-pagination">
+              <span></span>
+              <div>
+                <button id="tam-dwa-prev-2">Prev</button>
+                <span id="tam-dwa-page-info-2" style="margin:0 10px;"></span>
+                <button id="tam-dwa-next-2">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OCCUPATION EXPLORER PANEL -->
+        <div id="tam-occupations" class="tam-panel">
+          <div class="tam-card">
+            <h2>Search 831 Occupations</h2>
+            <input type="text" class="tam-search-box" id="tam-occ-search" placeholder="Search occupations... e.g. 'nurse', 'software', 'manager', 'truck driver'">
+            <div class="tam-filters">
+              <button class="tam-filter-btn active" data-occ-filter="all">All</button>
+              <button class="tam-filter-btn" data-occ-filter="High">High Exposure</button>
+              <button class="tam-filter-btn" data-occ-filter="Medium-High">Med-High Exposure</button>
+              <button class="tam-filter-btn" data-occ-filter="Medium">Medium Exposure</button>
+              <button class="tam-filter-btn" data-occ-filter="Low-Medium">Low-Med Exposure</button>
+              <button class="tam-filter-btn" data-occ-filter="Low">Low Exposure</button>
+            </div>
+
+            <div class="tam-pagination">
+              <span id="tam-occ-count">Showing 831 occupations</span>
+              <div>
+                <button id="tam-occ-prev">Prev</button>
+                <span id="tam-occ-page-info" style="margin:0 10px;"></span>
+                <button id="tam-occ-next">Next</button>
+              </div>
+            </div>
+
+            <div class="tam-table-wrap">
+              <table class="tam-table" id="tam-occ-table">
+                <thead>
+                  <tr>
+                    <th data-sort="title">Occupation <span class="sort-indicator"></span></th>
+                    <th data-sort="emp" class="tam-text-right">Employment <span class="sort-indicator"></span></th>
+                    <th data-sort="mean_wage" class="tam-text-right">Mean Wage <span class="sort-indicator"></span></th>
+                    <th data-sort="wage_bill" class="tam-text-right">Wage Bill <span class="sort-indicator"></span></th>
+                    <th data-sort="ai_score">LLM Task Exposure <span class="sort-indicator"></span></th>
+                    <th data-sort="high_pct" class="tam-text-right">High Exposure % <span class="sort-indicator"></span></th>
+                    <th>Top Activity</th>
+                  </tr>
+                </thead>
+                <tbody id="tam-occ-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="tam-pagination">
+              <span></span>
+              <div>
+                <button id="tam-occ-prev-2">Prev</button>
+                <span id="tam-occ-page-info-2" style="margin:0 10px;"></span>
+                <button id="tam-occ-next-2">Next</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ACTIVITY DETAIL MODAL -->
+        <div class="tam-modal-overlay" id="tam-dwa-modal">
+          <div class="tam-modal">
+            <div class="tam-modal-header">
+              <h2 id="tam-dwa-detail-title">Activity Detail</h2>
+              <button class="tam-modal-close" onclick="closeDwaDetail()">&times;</button>
+            </div>
+            <div class="tam-modal-content" id="tam-dwa-detail-content"></div>
+          </div>
+        </div>
+
+        <!-- OCCUPATION DETAIL MODAL -->
+        <div class="tam-modal-overlay" id="tam-occ-modal">
+          <div class="tam-modal">
+            <div class="tam-modal-header">
+              <h2 id="tam-occ-detail-title">Occupation Detail</h2>
+              <button class="tam-modal-close" onclick="closeOccDetail()">&times;</button>
+            </div>
+            <div class="tam-modal-content" id="tam-occ-detail-content"></div>
+          </div>
+        </div>
+
+        <!-- LLM TASK EXPOSURE PANEL -->
+        <div id="tam-exposure" class="tam-panel">
+          <div class="tam-insight-box">
+            <div class="tam-insight-title">The LLM Task Exposure Landscape</div>
+            <p>$5.54 trillion — more than half the U.S. wage bill — flows to activities with medium-high to high LLM task exposure. Exposure is not the same as adoption, displacement, or replacement; many high-exposure activities still require human judgment, context, and authority.</p>
+          </div>
+
+          <div class="tam-chart-grid">
+            <div class="tam-card">
+              <h2>Wage Bill by LLM Task Exposure Category</h2>
+              <div class="tam-chart-container">
+                <canvas id="tam-exposureWageChart"></canvas>
+              </div>
+            </div>
+            <div class="tam-card">
+              <h2>LLM Task Exposure by Task Type</h2>
+              <div class="tam-chart-container">
+                <canvas id="tam-exposureTaskTypeChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="tam-card">
+            <h2>LLM Task Exposure Spectrum: All 2,073 Activities</h2>
+            <div class="tam-chart-container-tall">
+              <canvas id="tam-spectrumChart"></canvas>
+            </div>
+          </div>
+
+          <div class="tam-chart-grid">
+            <div class="tam-card">
+              <h2>Most Exposed (High Value)</h2>
+              <div id="tam-top-exposed-list"></div>
+            </div>
+            <div class="tam-card">
+              <h2>Lowest-Exposure (High Value)</h2>
+              <div id="tam-top-low-exposure-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VALUE CONCENTRATION PANEL -->
+        <div id="tam-concentration" class="tam-panel">
+          <div class="tam-insight-box">
+            <div class="tam-insight-title">The Long Tail of Work</div>
+            <p>The economy’s work activities follow a steep power law. The top 100 activities (just 4.8% of all activities) account for 30.7% of the wage bill. The bottom 1,000 activities collectively represent only 9.2%. This concentration means shifts in a relatively small number of activities can have outsized economic effects.</p>
+          </div>
+
+          <div class="tam-card">
+            <h2>Cumulative Value Distribution (Pareto Curve)</h2>
+            <div class="tam-chart-container">
+              <canvas id="tam-paretoChart"></canvas>
+            </div>
+          </div>
+
+          <div class="tam-chart-grid">
+            <div class="tam-card">
+              <h2>Value Tiers</h2>
+              <div class="tam-chart-container-equal">
+                <canvas id="tam-tierChart"></canvas>
+              </div>
+            </div>
+            <div class="tam-card">
+              <h2>GWA Categories by Value</h2>
+              <div class="tam-chart-container-equal">
+                <canvas id="tam-gwaBarChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- METHODOLOGY PANEL -->
+        <div id="tam-methodology" class="tam-panel">
+          <div class="tam-card">
+            <h2>Methodology</h2>
+            <div class="tam-methodology" id="tam-methodology-content">
+              <!-- We will inject or mirror the methodology text from the original dashboard via JS or static copy -->
+              <p>This dashboard is built from O*NET task-level data, BLS occupation statistics, and custom mappings that allocate wages from occupations to detailed work activities. Each activity receives a share of wages from the occupations that use it, weighted by intensity and prevalence. LLM task exposure scores are derived from GPTs-are-GPTs task labels (E0/E1/E2) and represent potential for meaningful time reduction at similar quality. These scores indicate technical exposure, not guaranteed adoption, replacement, or displacement.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tam-footer">
+          Task Atlas is a personal project visualizing O*NET and Bureau of Labor statistics data with inspiration from Anthropic's Economic Index and other labor-index work at the occupation level.
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span class="footer-left">&copy; Grant Gutzwiller</span>
+        <span class="footer-right">Claremont CA, <span id="current-time"></span></span>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+      // Load DATA from original dashboard HTML
+      let DATA = null;
+      
+      // Show loading indicator
+      const loadingEl = document.getElementById('tam-loading-indicator');
+      if (loadingEl) loadingEl.style.display = 'block';
+
+      // Load pre-built Task Atlas JSON from the site data folder.
+      fetch('data/task_tam_data.json')
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(json => {
+          if (loadingEl) loadingEl.style.display = 'none';
+          DATA = json;
+          initAllCharts();
+        })
+        .catch(e => {
+          console.error('Failed to load Task Atlas data JSON:', e);
+          if (loadingEl) {
+            loadingEl.style.display = 'none';
+            loadingEl.innerHTML = '<p style="color:#333333;">Failed to load data. Run the exporter script and refresh.</p>';
+            loadingEl.style.display = 'block';
+          }
+        });
+
+      // ── Utility Functions (Monochrome adapted) ──
+      function fmtVal(v) {
+        if (v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
+        if (v >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B';
+        if (v >= 1e6) return '$' + (v/1e6).toFixed(0) + 'M';
+        return '$' + v.toLocaleString();
+      }
+      function fmtNum(n) { return n.toLocaleString(); }
+      
+      // Monochrome color function - returns pure grayscale based on score
+      function tamExposureColor(score) {
+        if (score >= 70) return '#000000';      // Pure black for high
+        if (score >= 50) return '#333333';      // Dark gray
+        if (score >= 35) return '#555555';      // Medium-dark gray
+        if (score >= 20) return '#777777';      // Medium gray
+        return '#999999';                       // Light gray
+      }
+      
+      function tamExposureColorAlpha(score, alpha = 0.7) {
+        const base = tamExposureColor(score);
+        const r = parseInt(base.slice(1,3), 16);
+        const g = parseInt(base.slice(3,5), 16);
+        const b = parseInt(base.slice(5,7), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+      
+      function taskLabel(t) {
+        const labels = {
+          cognitive_routine:'Cognitive Routine',
+          cognitive_analytical:'Analytical',
+          creative:'Creative',
+          interpersonal:'Interpersonal',
+          physical_routine:'Physical',
+          physical_skilled:'Skilled Physical',
+          supervisory:'Supervisory'
+        };
+        return labels[t] || t;
+      }
+
+      // Split compound task types into individual badges
+      function renderTaskTypeBadges(taskType) {
+        if (!taskType) return '';
+        
+        // Split by underscore to get individual type components
+        const parts = taskType.split('_');
+        if (parts.length <= 1) {
+          // Single type, return one badge
+          return `<span class="tam-badge">${taskLabel(taskType)}</span>`;
+        }
+        
+        // Multiple types - create separate badges
+        // Map individual parts to their labels
+        const partLabels = {
+          cognitive: 'Cognitive',
+          analytical: 'Analytical',
+          routine: 'Routine',
+          creative: 'Creative',
+          interpersonal: 'Interpersonal',
+          physical: 'Physical',
+          skilled: 'Skilled',
+          supervisory: 'Supervisory'
+        };
+        
+        const badges = parts.map(part => {
+          const label = partLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
+          return `<span class="tam-badge">${label}</span>`;
+        }).join('');
+        
+        return `<span class="tam-badge-container">${badges}</span>`;
+      }
+
+      // Monochrome palette for task types - each with distinct shade
+      const tamTaskColors = {
+        cognitive_routine: '#000000',      // Pure black
+        cognitive_analytical: '#2a2a2a',  // Very dark grey
+        creative: '#555555',              // Medium-dark grey
+        interpersonal: '#777777',         // Medium grey
+        physical_routine: '#999999',       // Medium-light grey
+        physical_skilled: '#bbbbbb',       // Light grey
+        supervisory: '#444444'           // Dark grey
+      };
+
+      // ── Tab Switching ──
+      document.querySelectorAll('.tam-nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const target = tab.getAttribute('data-panel');
+          document.querySelectorAll('.tam-nav-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tam-panel').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(target).classList.add('active');
+        });
+      });
+
+      // ── Chart Initialization (Monochrome) ──
+      function initCharts() {
+        if (!DATA) return;
+        
+        Chart.defaults.color = '#333333';
+        Chart.defaults.borderColor = 'rgba(0,0,0,0.2)';
+        Chart.defaults.font.family = 'Inter, -apple-system, sans-serif';
+        
+        // Task Type Chart (Doughnut) - sorted by value, colors get lighter clockwise
+        const ttData = (DATA.task_types || []).slice().sort((a, b) => b.value - a.value);
+        if (ttData.length > 0) {
+          // Progressive grey scale from darkest to lightest (clockwise)
+          const progressiveGrays = ['#000000', '#444444', '#666666', '#888888', '#aaaaaa', '#bbbbbb', '#dddddd'];
+          new Chart(document.getElementById('tam-taskTypeChart'), {
+            type: 'doughnut',
+            data: {
+              labels: ttData.map(t => taskLabel(t.task_type)),
+              datasets: [{
+                data: ttData.map(t => t.value),
+                backgroundColor: ttData.map((t, i) => progressiveGrays[i] || '#666666'),
+                borderWidth: 0
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'right', labels: { padding: 12, usePointStyle: true, color: '#333333' } },
+                tooltip: { 
+                  callbacks: { 
+                    label: ctx => `${ctx.label}: ${fmtVal(ctx.raw)} (${DATA.stats ? (ctx.raw/DATA.stats.total_wage_bill*100).toFixed(1) : 0}%)` 
+                  } 
+                }
+              }
+            }
+          });
+        }
+        
+        // Exposure distribution chart (doughnut)
+        const exposureCats = ['High','Medium-High','Medium','Low-Medium','Low'];
+        const exposureVals = exposureCats.map(cat => DATA.dwas.filter(d => d.ai_cat === cat).reduce((s,d) => s + d.value, 0));
+        const exposureGrayScale = ['#000000', '#333333', '#666666', '#999999', '#cccccc'];
+        new Chart(document.getElementById('tam-exposureDistChart'), {
+          type: 'doughnut',
+          data: {
+            labels: exposureCats,
+            datasets: [{ data: exposureVals, backgroundColor: exposureGrayScale, borderWidth: 0 }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right', labels: { padding: 12, usePointStyle: true, color: '#333333' } },
+              tooltip: { 
+                callbacks: { 
+                  label: ctx => `${ctx.label}: ${fmtVal(ctx.raw)} (${DATA.stats ? (ctx.raw/DATA.stats.total_wage_bill*100).toFixed(1) : 0}%)` 
+                } 
+              }
+            }
+          }
+        });
+        
+        // Top 20 DWAs Bar Chart
+        const top20 = DATA.dwas.slice(0, 20);
+        new Chart(document.getElementById('tam-topDwaChart'), {
+          type: 'bar',
+          data: {
+            labels: top20.map(d => d.title.length > 50 ? d.title.substring(0,47) + '...' : d.title),
+            datasets: [{
+              data: top20.map(d => d.value),
+              backgroundColor: top20.map(d => tamExposureColorAlpha(d.ai_score, 0.8)),
+              borderColor: top20.map(d => tamExposureColor(d.ai_score)),
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { 
+                callbacks: { 
+                  label: ctx => `${fmtVal(ctx.raw)} | LLM Exposure Score: ${top20[ctx.dataIndex].ai_score}` 
+                } 
+              } 
+            },
+            scales: { 
+              x: { 
+                ticks: { 
+                  callback: function(v) {
+                    const val = fmtVal(v);
+                    // Remove .0 from the format (e.g., "120.0B" -> "120B", "$120.0B" -> "$120B")
+                    return val.replace(/\.0([BMKT])/g, '$1');
+                  }, 
+                  color: '#333333',
+                  font: { size: 10 }
+                }, 
+                grid: { color: 'rgba(0,0,0,0.1)' },
+                title: { display: true, text: 'Economic Value', color: '#333333', font: { size: 12, weight: 'bold' } }
+              }, 
+              y: { 
+                ticks: { font: { size: 11 }, color: '#333333' },
+                grid: { color: 'rgba(0,0,0,0.1)' }
+              } 
+            }
+          }
+        });
+        
+        // Scatter: LLM Task Exposure vs Value (Bubble)
+        const scatterData = DATA.dwas.map(d => ({
+          x: d.ai_score, 
+          y: d.value, 
+          r: Math.max(3, Math.sqrt(d.value/1e9)*2), 
+          title: d.title, 
+          type: d.task_type
+        }));
+        const types = Object.keys(tamTaskColors);
+        const scatterChart = new Chart(document.getElementById('tam-scatterChart'), {
+          type: 'bubble',
+          data: {
+            datasets: types.map(t => ({
+              label: taskLabel(t),
+              data: scatterData.filter(d => d.type === t),
+              backgroundColor: tamTaskColors[t] + '80', // More opaque for better visibility
+              borderColor: tamTaskColors[t],
+              borderWidth: 1.5 // Slightly thicker border for distinction
+            }))
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { 
+                display: false  // Disable Chart.js legend - we'll create a custom one
+              },
+              tooltip: { 
+                callbacks: { 
+                  label: ctx => `${ctx.raw.title}: ${fmtVal(ctx.raw.y)} | LLM Exposure: ${ctx.raw.x}` 
+                } 
+              }
+            },
+            scales: {
+              x: { 
+                title: { display: true, text: 'LLM Task Exposure Score', color: '#333333' }, 
+                min: 0, 
+                max: 100, 
+                grid: { color: 'rgba(0,0,0,0.1)' },
+                ticks: { color: '#333333' }
+              },
+              y: { 
+                title: { display: true, text: 'Economic Value', color: '#333333', font: { size: 12, weight: 'bold' } }, 
+                ticks: { 
+                  callback: function(v) {
+                    const val = fmtVal(v);
+                    // Remove .0 from the format (e.g., "120.0B" -> "120B")
+                    return val.replace(/\.0([BMKT])/g, '$1');
+                  }, 
+                  color: '#333333',
+                  font: { size: 10 }
+                }, 
+                grid: { color: 'rgba(0,0,0,0.1)' } 
+              }
+            },
+            animation: false
+          }
+        });
+
+        // Build custom legend for scatter chart (outside animation callback so it's stable)
+        const scatterChartEl = document.getElementById('tam-scatterChart');
+        const customLegend = document.createElement('div');
+        customLegend.className = 'tam-custom-legend';
+
+        const firstRow = document.createElement('div');
+        firstRow.className = 'tam-legend-row';
+        firstRow.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 24px; width: 100%;';
+
+        const secondRow = document.createElement('div');
+        secondRow.className = 'tam-legend-row';
+        secondRow.style.cssText = 'display: flex; justify-content: center; gap: 24px; width: 100%;';
+
+        types.forEach((t, index) => {
+          const item = document.createElement('div');
+          item.className = 'tam-legend-item';
+          item.style.cursor = 'pointer';
+
+          const dot = document.createElement('span');
+          dot.className = 'tam-legend-dot';
+          dot.style.backgroundColor = tamTaskColors[t] + '80';
+          dot.style.borderColor = tamTaskColors[t];
+
+          const label = document.createElement('span');
+          label.className = 'tam-legend-label';
+          label.textContent = taskLabel(t);
+
+          item.addEventListener('click', () => {
+            const chart = Chart.getChart('tam-scatterChart');
+            if (!chart) return;
+            const meta = chart.getDatasetMeta(index);
+            meta.hidden = !meta.hidden;
+            chart.update();
+            item.style.opacity = meta.hidden ? '0.35' : '1';
+            dot.style.backgroundColor = meta.hidden ? '#ccc' : tamTaskColors[t] + '80';
+            label.style.textDecoration = meta.hidden ? 'line-through' : 'none';
+          });
+
+          item.appendChild(dot);
+          item.appendChild(label);
+
+          if (index < 4) {
+            firstRow.appendChild(item);
+          } else {
+            secondRow.appendChild(item);
+          }
+        });
+
+        customLegend.appendChild(firstRow);
+        customLegend.appendChild(secondRow);
+
+        const canvasContainer = scatterChartEl.parentElement;
+        if (canvasContainer && canvasContainer.parentElement) {
+          canvasContainer.parentElement.insertBefore(customLegend, canvasContainer);
+        }
+      }
+
+      function initExposureCharts() {
+        if (!DATA) return;
+        
+        // Exposure wage chart
+        const exposureCats = ['High','Medium-High','Medium','Low-Medium','Low'];
+        const exposureGrayScale = ['#000000', '#333333', '#666666', '#999999', '#cccccc'];
+        const exposureVals = exposureCats.map(cat => DATA.dwas.filter(d => d.ai_cat === cat).reduce((s,d) => s + d.value, 0));
+        const exposureCounts = exposureCats.map(cat => DATA.dwas.filter(d => d.ai_cat === cat).length);
+        new Chart(document.getElementById('tam-exposureWageChart'), {
+          type: 'bar',
+          data: {
+            labels: exposureCats,
+            datasets: [{
+              label: 'Wage Value',
+              data: exposureVals,
+              backgroundColor: exposureGrayScale,
+              borderWidth: 0,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { 
+                callbacks: { 
+                  label: ctx => `${fmtVal(ctx.raw)} (${exposureCounts[ctx.dataIndex]} activities)` 
+                } 
+              } 
+            },
+            scales: { 
+              y: { 
+                ticks: { callback: v => fmtVal(v), color: '#333333' }, 
+                grid: { color: 'rgba(0,0,0,0.1)' } 
+              },
+              x: {
+                ticks: { color: '#333333' },
+                grid: { color: 'rgba(0,0,0,0.1)' }
+              }
+            }
+          }
+        });
+        
+        // Exposure by task type
+        const ttData = DATA.task_types || [];
+        if (ttData.length > 0) {
+          new Chart(document.getElementById('tam-exposureTaskTypeChart'), {
+            type: 'bar',
+            data: {
+              labels: ttData.map(t => taskLabel(t.task_type)),
+              datasets: [{
+                label: 'Avg LLM Exposure Score',
+                data: ttData.map(t => t.avg_ai),
+                backgroundColor: ttData.map(t => tamExposureColorAlpha(t.avg_ai, 0.8)),
+                borderColor: ttData.map(t => tamExposureColor(t.avg_ai)),
+                borderWidth: 1,
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                  callbacks: { 
+                    label: ctx => `Avg LLM Exposure Score: ${ctx.raw} | Value: ${fmtVal(ttData[ctx.dataIndex].value)}` 
+                  } 
+                } 
+              },
+              scales: { 
+                y: { 
+                  max: 100, 
+                  title: { display: true, text: 'LLM Task Exposure Score', color: '#333333' }, 
+                  grid: { color: 'rgba(0,0,0,0.1)' },
+                  ticks: { color: '#333333' }
+                },
+                x: {
+                  ticks: { color: '#333333' },
+                  grid: { color: 'rgba(0,0,0,0.1)' }
+                }
+              }
+            }
+          });
+        }
+        
+        // Spectrum chart - improved visibility with borders and higher contrast
+        const specData = DATA.dwas.map((d,i) => ({x: i, y: d.ai_score, value: d.value, title: d.title}));
+        new Chart(document.getElementById('tam-spectrumChart'), {
+          type: 'bar',
+          data: {
+            labels: specData.map(d => ''),
+            datasets: [{
+              data: specData.map(d => d.y),
+              backgroundColor: specData.map(d => tamExposureColorAlpha(d.y, 0.85)),
+              borderColor: specData.map(d => tamExposureColor(d.y)),
+              borderWidth: 0.5,
+              barPercentage: 1,
+              categoryPercentage: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { 
+                callbacks: { 
+                  title: ctx => specData[ctx[0].dataIndex].title,
+                  label: ctx => `LLM Exposure Score: ${ctx.raw} | Value: ${fmtVal(specData[ctx.dataIndex].value)}`
+                } 
+              } 
+            },
+            scales: {
+              x: { 
+                display: false,
+                grid: { 
+                  color: 'rgba(0,0,0,0.15)',
+                  lineWidth: 1
+                }
+              },
+              y: { 
+                max: 100, 
+                title: { display: true, text: 'LLM Task Exposure Score', color: '#333333' }, 
+                grid: { 
+                  color: 'rgba(0,0,0,0.15)',
+                  lineWidth: 1
+                },
+                ticks: { color: '#333333' }
+              }
+            }
+          }
+        });
+        
+        // Top exposed and low-exposure lists
+        const highVal = DATA.dwas.filter(d => d.ai_score >= 70).sort((a,b) => b.value - a.value).slice(0,15);
+        let expHtml = '';
+        highVal.forEach(d => {
+          expHtml += `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.1);">
+            <div class="tam-exposure-bar" style="width:60px;"><div class="tam-exposure-bar-fill" style="width:${d.ai_score}%;background:${tamExposureColor(d.ai_score)};"></div></div>
+            <span style="font-weight:700;font-size:0.85em;min-width:60px;color:#333333;">${fmtVal(d.value)}</span>
+            <span style="font-size:0.85em;color:#333333;">${d.title}</span>
+          </div>`;
+        });
+        const expEl = document.getElementById('tam-top-exposed-list');
+        if (expEl) expEl.innerHTML = expHtml;
+        
+        const lowVal = DATA.dwas.filter(d => d.ai_score < 25).sort((a,b) => b.value - a.value).slice(0,15);
+        let resHtml = '';
+        lowVal.forEach(d => {
+          resHtml += `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.1);">
+            <div class="tam-exposure-bar" style="width:60px;"><div class="tam-exposure-bar-fill" style="width:${Math.max(d.ai_score,3)}%;background:${tamExposureColor(d.ai_score)};"></div></div>
+            <span style="font-weight:700;font-size:0.85em;min-width:60px;color:#333333;">${fmtVal(d.value)}</span>
+            <span style="font-size:0.85em;color:#333333;">${d.title}</span>
+          </div>`;
+        });
+        const resEl = document.getElementById('tam-top-low-exposure-list');
+        if (resEl) resEl.innerHTML = resHtml;
+      }
+
+      function initConcentrationCharts() {
+        if (!DATA) return;
+        
+        // Pareto curve
+        const sorted = [...DATA.dwas].sort((a,b) => b.value - a.value);
+        const total = sorted.reduce((s,d) => s + d.value, 0);
+        let cum = 0;
+        const paretoData = sorted.map((d,i) => { cum += d.value; return {x: i+1, y: cum/total*100}; });
+        
+        new Chart(document.getElementById('tam-paretoChart'), {
+          type: 'line',
+          data: {
+            datasets: [{
+              data: paretoData,
+              borderColor: '#000000',
+              backgroundColor: 'rgba(0,0,0,0.05)',
+              fill: true,
+              pointRadius: 0,
+              borderWidth: 2.5,
+              tension: 0.2,
+              stepped: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { 
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                padding: 12,
+                titleFont: { size: 12, weight: 'bold' },
+                bodyFont: { size: 11 },
+                callbacks: { 
+                  title: ctx => `Top ${Math.round(ctx[0].raw.x)} activities`,
+                  label: ctx => `${ctx.raw.y.toFixed(1)}% of wage bill`
+                } 
+              }
+            },
+            scales: {
+              x: { 
+                type: 'linear', 
+                title: { display: true, text: 'Number of Activities (ranked by value)', color: '#333333', font: { size: 12, weight: 'bold' } }, 
+                grid: { color: 'rgba(0,0,0,0.08)', drawBorder: true, borderColor: '#333333' },
+                ticks: { color: '#333333', font: { size: 10 }, maxTicksLimit: 8 },
+                min: 0,
+                max: sorted.length
+              },
+              y: { 
+                title: { display: true, text: 'Cumulative % of Wage Bill', color: '#333333', font: { size: 12, weight: 'bold' } }, 
+                max: 100, 
+                grid: { color: 'rgba(0,0,0,0.08)', drawBorder: true, borderColor: '#333333' },
+                ticks: { color: '#333333', font: { size: 10 }, callback: function(value) { return value + '%'; } }
+              }
+            }
+          }
+        });
+        
+        // Tier chart
+        const tiers = [
+          {label: 'Top 10', count: 10},
+          {label: 'Top 11-50', count: 40}, 
+          {label: 'Top 51-100', count: 50},
+          {label: 'Top 101-500', count: 400},
+          {label: 'Top 501-1000', count: 500},
+          {label: 'Bottom 1073', count: 1073}
+        ];
+        let offset = 0;
+        const tierVals = tiers.map(t => {
+          const val = sorted.slice(offset, offset + t.count).reduce((s,d) => s + d.value, 0);
+          offset += t.count;
+          return val;
+        });
+        const tierGrayScale = ['#000000', '#333333', '#666666', '#999999', '#bbbbbb', '#cccccc'];
+        new Chart(document.getElementById('tam-tierChart'), {
+          type: 'bar',
+          data: {
+            labels: tiers.map(t => t.label),
+            datasets: [{
+              data: tierVals,
+              backgroundColor: tierGrayScale,
+              borderWidth: 0,
+              borderRadius: 8,
+              barPercentage: 0.7,
+              categoryPercentage: 0.8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { 
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                padding: 12,
+                titleFont: { size: 12, weight: 'bold' },
+                bodyFont: { size: 11 },
+                callbacks: { 
+                  label: ctx => `${fmtVal(ctx.raw)} (${(ctx.raw/total*100).toFixed(1)}%)` 
+                } 
+              } 
+            },
+            scales: { 
+              y: { 
+                ticks: { callback: v => fmtVal(v), color: '#333333', font: { size: 10 } }, 
+                grid: { color: 'rgba(0,0,0,0.08)', drawBorder: true, borderColor: '#333333' },
+                title: { display: true, text: 'Value', color: '#333333', font: { size: 12, weight: 'bold' } }
+              },
+              x: {
+                ticks: { color: '#333333', font: { size: 10 } },
+                grid: { display: false, drawBorder: true, borderColor: '#333333' }
+              }
+            }
+          }
+        });
+        
+        // GWA Bar Chart
+        const gwas = (DATA.gwas || []).slice(0, 25);
+        if (gwas.length > 0) {
+          new Chart(document.getElementById('tam-gwaBarChart'), {
+            type: 'bar',
+            data: {
+              labels: gwas.map(g => g.name.length > 40 ? g.name.substring(0,37) + '...' : g.name),
+              datasets: [{
+                data: gwas.map(g => g.value),
+                backgroundColor: gwas.map(g => tamExposureColorAlpha(g.avg_ai, 0.85)),
+                borderColor: gwas.map(g => tamExposureColor(g.avg_ai)),
+                borderWidth: 1.5,
+                borderRadius: 6,
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  padding: 12,
+                  titleFont: { size: 12, weight: 'bold' },
+                  bodyFont: { size: 11 },
+                  callbacks: { 
+                    title: ctx => gwas[ctx[0].dataIndex].name,
+                    label: ctx => `Value: ${fmtVal(ctx.raw)} | Avg Exposure: ${gwas[ctx.dataIndex].avg_ai} | ${gwas[ctx.dataIndex].n_dwas} activities` 
+                  } 
+                } 
+              },
+              scales: { 
+                x: { 
+                  ticks: { callback: v => fmtVal(v), color: '#333333', font: { size: 10 } }, 
+                  grid: { color: 'rgba(0,0,0,0.08)', drawBorder: true, borderColor: '#333333' },
+                  title: { display: true, text: 'Value', color: '#333333', font: { size: 12, weight: 'bold' } }
+                }, 
+                y: { 
+                  ticks: { font: { size: 9 }, color: '#333333' },
+                  grid: { display: false, drawBorder: true, borderColor: '#333333' }
+                } 
+              }
+            }
+          });
+        }
+      }
+
+      // ── DWA (Activity) Table Functions ──
+      let dwaData = [], dwaFiltered = [], dwaPage = 0, dwaPerPage = 50;
+      let dwaSortCol = 'rank', dwaSortAsc = true;
+      let dwaFilterCat = 'all', dwaFilterType = null;
+
+      function initDwa() {
+        if (!DATA || !DATA.dwas) return;
+        dwaData = DATA.dwas;
+        dwaFiltered = [...dwaData];
+        renderDwaTable();
+        updateSortIndicators('dwa');
+      }
+
+      function filterDwa(cat, btn) {
+        dwaFilterCat = cat;
+        dwaFilterType = null;
+        document.querySelectorAll('#tam-activities .tam-filter-btn').forEach(b => {
+          if (b.hasAttribute('data-filter')) b.classList.remove('active');
+        });
+        if (btn) btn.classList.add('active');
+        applyDwaFilters();
+      }
+
+      function filterDwaType(type, btn) {
+        dwaFilterType = type;
+        dwaFilterCat = 'all';
+        document.querySelectorAll('#tam-activities .tam-filter-btn').forEach(b => {
+          if (b.hasAttribute('data-filter-type')) b.classList.remove('active');
+        });
+        if (btn) btn.classList.add('active');
+        applyDwaFilters();
+      }
+
+      function applyDwaFilters() {
+        if (!DATA || !DATA.dwas) return;
+        const q = document.getElementById('tam-dwa-search')?.value.toLowerCase() || '';
+        dwaFiltered = dwaData.filter(d => {
+          if (q && !d.title.toLowerCase().includes(q) && !d.gwa.toLowerCase().includes(q) && !d.id.toLowerCase().includes(q)) return false;
+          if (dwaFilterCat !== 'all' && d.ai_cat !== dwaFilterCat) return false;
+          if (dwaFilterType && d.task_type !== dwaFilterType) return false;
+          return true;
+        });
+        dwaPage = 0;
+        renderDwaTable();
+      }
+
+      function sortDwa(col) {
+        if (dwaSortCol === col) dwaSortAsc = !dwaSortAsc;
+        else { dwaSortCol = col; dwaSortAsc = col === 'title' || col === 'gwa' || col === 'task_type'; }
+        dwaFiltered.sort((a,b) => {
+          let va = a[col], vb = b[col];
+          if (typeof va === 'string') return dwaSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+          return dwaSortAsc ? va - vb : vb - va;
+        });
+        dwaPage = 0;
+        renderDwaTable();
+        updateSortIndicators('dwa');
+      }
+
+      function updateSortIndicators(type) {
+        if (type === 'dwa') {
+          document.querySelectorAll('#tam-dwa-table th').forEach(th => {
+            th.classList.remove('sorted');
+            const indicator = th.querySelector('.sort-indicator');
+            if (indicator) indicator.textContent = ''; // Empty - CSS ::before handles placeholder
+          });
+          const activeTh = document.querySelector(`#tam-dwa-table th[data-sort="${dwaSortCol}"]`);
+          if (activeTh) {
+            activeTh.classList.add('sorted');
+            const indicator = activeTh.querySelector('.sort-indicator');
+            if (indicator) indicator.textContent = dwaSortAsc ? '↑' : '↓';
+          }
+        } else if (type === 'occ') {
+          document.querySelectorAll('#tam-occ-table th').forEach(th => {
+            th.classList.remove('sorted');
+            const indicator = th.querySelector('.sort-indicator');
+            if (indicator) indicator.textContent = ''; // Empty - CSS ::before handles placeholder
+          });
+          const activeTh = document.querySelector(`#tam-occ-table th[data-sort="${occSortCol}"]`);
+          if (activeTh) {
+            activeTh.classList.add('sorted');
+            const indicator = activeTh.querySelector('.sort-indicator');
+            if (indicator) indicator.textContent = occSortAsc ? '↑' : '↓';
+          }
+        }
+      }
+
+      function renderDwaTable() {
+        if (!dwaFiltered.length) {
+          document.getElementById('tam-dwa-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#333333;">No activities found</td></tr>';
+          return;
+        }
+        
+        const start = dwaPage * dwaPerPage;
+        const slice = dwaFiltered.slice(start, start + dwaPerPage);
+        const totalPages = Math.ceil(dwaFiltered.length / dwaPerPage);
+        
+        let totalValue = dwaFiltered.reduce((s,d) => s + d.value, 0);
+        const countEl = document.getElementById('tam-dwa-count');
+        if (countEl) countEl.textContent = `Showing ${fmtNum(dwaFiltered.length)} activities (${fmtVal(totalValue)} total value)`;
+        
+        const pageInfo = `Page ${dwaPage+1} of ${totalPages}`;
+        const pageInfoEl1 = document.getElementById('tam-dwa-page-info');
+        const pageInfoEl2 = document.getElementById('tam-dwa-page-info-2');
+        if (pageInfoEl1) pageInfoEl1.textContent = pageInfo;
+        if (pageInfoEl2) pageInfoEl2.textContent = pageInfo;
+        
+        let html = '';
+        slice.forEach(d => {
+          const barColor = tamExposureColor(d.ai_score);
+          // Escape the DWA ID for use in data attribute
+          const safeId = d.id.replace(/'/g, "\\'");
+          html += `<tr class="tam-row-hover tam-dwa-row" style="cursor:pointer;" data-dwa-id="${safeId}">
+            <td class="value-fmt" style="color:#333333;">${d.rank || ''}</td>
+            <td style="color:#333333;"><strong>${d.title}</strong></td>
+            <td class="tam-text-dim" style="font-size:0.8em;">${d.gwa || ''}</td>
+            <td class="tam-text-right value-fmt" style="color:#333333;">${fmtVal(d.value)}</td>
+            <td class="tam-text-right value-fmt" style="color:#333333;">${(d.share || 0).toFixed(3)}%</td>
+            <td><div class="tam-exposure-bar"><div class="tam-exposure-bar-fill" style="width:${d.ai_score || 0}%;background:${barColor};"></div></div><span style="font-size:0.75em;color:#333333;margin-left:4px;">${d.ai_score || 0}</span></td>
+            <td>${renderTaskTypeBadges(d.task_type || '')}</td>
+          </tr>`;
+        });
+        document.getElementById('tam-dwa-tbody').innerHTML = html;
+        
+        // Re-attach click handlers using event delegation
+        document.querySelectorAll('.tam-dwa-row').forEach(row => {
+          row.addEventListener('click', function(e) {
+            // Don't trigger if clicking on a link or button
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+            const dwaId = this.getAttribute('data-dwa-id');
+            if (dwaId) {
+              showDwaDetail(dwaId);
+            }
+          });
+        });
+      }
+
+      function dwaNextPage() {
+        if ((dwaPage+1) * dwaPerPage < dwaFiltered.length) {
+          dwaPage++;
+          renderDwaTable();
+        }
+      }
+
+      function dwaPrevPage() {
+        if (dwaPage > 0) {
+          dwaPage--;
+          renderDwaTable();
+        }
+      }
+
+      // ── Occupation Table Functions ──
+      let occData = [], occFiltered = [], occPage = 0, occPerPage = 50;
+      let occSortCol = 'wage_bill', occSortAsc = false;
+      let occFilterLevel = 'all';
+
+      function initOcc() {
+        if (!DATA) return;
+        occData = DATA.occs || [];
+        occFiltered = [...occData];
+        renderOccTable();
+        updateSortIndicators('occ');
+      }
+
+      function filterOcc(level, btn) {
+        occFilterLevel = level;
+        document.querySelectorAll('#tam-occupations .tam-filter-btn').forEach(b => {
+          if (b.hasAttribute('data-occ-filter')) b.classList.remove('active');
+        });
+        if (btn) btn.classList.add('active');
+        applyOccFilters();
+      }
+
+      function applyOccFilters() {
+        if (!occData.length) return;
+        const q = document.getElementById('tam-occ-search')?.value.toLowerCase() || '';
+        occFiltered = occData.filter(o => {
+          if (q && !o.title.toLowerCase().includes(q) && !(o.soc || o.code || '').toLowerCase().includes(q)) return false;
+          if (occFilterLevel === 'all') return true;
+          // Use same exposure categories as activity explorer (based on ai_cat field or score ranges)
+          const score = o.ai_score || 0;
+          // Check if occupation has ai_cat field, otherwise use score ranges
+          if (o.ai_cat) {
+            if (occFilterLevel !== 'all' && o.ai_cat !== occFilterLevel) return false;
+          } else {
+            // Fallback to score-based filtering (same ranges as activities)
+            if (occFilterLevel === 'High' && score < 70) return false;
+            if (occFilterLevel === 'Medium-High' && (score < 50 || score >= 70)) return false;
+            if (occFilterLevel === 'Medium' && (score < 35 || score >= 50)) return false;
+            if (occFilterLevel === 'Low-Medium' && (score < 20 || score >= 35)) return false;
+            if (occFilterLevel === 'Low' && score >= 20) return false;
+          }
+          return true;
+        });
+        occPage = 0;
+        renderOccTable();
+      }
+
+      function sortOcc(col) {
+        if (occSortCol === col) occSortAsc = !occSortAsc;
+        else { occSortCol = col; occSortAsc = col === 'title'; }
+        occFiltered.sort((a,b) => {
+          let va = a[col], vb = b[col];
+          if (typeof va === 'string') return occSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+          return occSortAsc ? va - vb : vb - va;
+        });
+        occPage = 0;
+        renderOccTable();
+        updateSortIndicators('occ');
+      }
+
+      function renderOccTable() {
+        if (!occFiltered.length) {
+          document.getElementById('tam-occ-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#333333;">No occupations found</td></tr>';
+          return;
+        }
+        
+        const start = occPage * occPerPage;
+        const slice = occFiltered.slice(start, start + occPerPage);
+        const totalPages = Math.ceil(occFiltered.length / occPerPage);
+        
+        const countEl = document.getElementById('tam-occ-count');
+        if (countEl) countEl.textContent = `Showing ${fmtNum(occFiltered.length)} occupations`;
+        
+        const pageInfo = `Page ${occPage+1} of ${totalPages}`;
+        const pageInfoEl1 = document.getElementById('tam-occ-page-info');
+        const pageInfoEl2 = document.getElementById('tam-occ-page-info-2');
+        if (pageInfoEl1) pageInfoEl1.textContent = pageInfo;
+        if (pageInfoEl2) pageInfoEl2.textContent = pageInfo;
+        
+        let html = '';
+        slice.forEach(o => {
+          const barColor = tamExposureColor(o.ai_score || 0);
+          const soc = o.soc || o.code || '';
+          html += `<tr class="tam-row-hover" style="cursor:pointer;" onclick="showOccDetail('${soc}')">
+            <td style="color:#333333;"><strong>${o.title}</strong><br><span class="tam-text-dim" style="font-size:0.75em;">${soc}</span></td>
+            <td class="tam-text-right value-fmt" style="color:#333333;">${fmtNum(o.emp || o.TOT_EMP || 0)}</td>
+            <td class="tam-text-right value-fmt" style="color:#333333;">$${fmtNum(o.mean_wage || o.A_MEAN || 0)}</td>
+            <td class="tam-text-right value-fmt" style="color:#333333;">${fmtVal(o.wage_bill || o.wb || 0)}</td>
+            <td><div class="tam-exposure-bar"><div class="tam-exposure-bar-fill" style="width:${o.ai_score || 0}%;background:${barColor};"></div></div><span style="font-size:0.75em;color:#333333;margin-left:4px;">${o.ai_score || 0}</span></td>
+            <td class="tam-text-right value-fmt" style="color:#333333;">${(o.high_pct || 0).toFixed(1)}%</td>
+            <td class="tam-text-dim" style="font-size:0.8em;max-width:200px;">${o.top_dwa || ''}</td>
+          </tr>`;
+        });
+        document.getElementById('tam-occ-tbody').innerHTML = html;
+      }
+
+      function showOccDetail(soc) {
+        // Close activity detail modal if open
+        closeDwaDetail();
+        
+        const occ = occData.find(o => (o.soc || o.code) === soc);
+        if (!occ) return;
+        
+        let html = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div class="tam-stat-card"><div class="number" style="font-size:1.4em;">${fmtNum(occ.emp || occ.TOT_EMP || 0)}</div><div class="label">Employment</div></div>
+          <div class="tam-stat-card"><div class="number" style="font-size:1.4em;">$${fmtNum(occ.mean_wage || occ.A_MEAN || 0)}</div><div class="label">Mean Annual Wage</div></div>
+          <div class="tam-stat-card"><div class="number" style="font-size:1.4em;">${fmtVal(occ.wage_bill || occ.wb || 0)}</div><div class="label">Total Wage Bill</div></div>
+        </div>`;
+        
+        html += `<div style="margin-bottom:20px;">
+          <p style="font-weight:700;color:#333333;margin:0;">LLM Task Exposure: ${occ.ai_score || 0}/100</p>
+        </div>`;
+        
+        // Show all activities for this occupation
+        const socDwaData = DATA?.soc_dwa || [];
+        
+        if (socDwaData.length) {
+          // Normalize SOC codes for matching (remove dashes, handle different formats)
+          const normalizeSoc = (s) => String(s || '').replace(/-/g, '').trim();
+          const socNormalized = normalizeSoc(soc);
+          const occCodeNormalized = normalizeSoc(occ.code);
+          const occSocNormalized = normalizeSoc(occ.soc);
+          
+          const occActivities = socDwaData.filter(sd => {
+            const sdSoc = normalizeSoc(sd[0]);
+            return sdSoc === socNormalized || sdSoc === occCodeNormalized || sdSoc === occSocNormalized;
+          });
+          
+          const dwaMap = {};
+          if (DATA.dwas) {
+            DATA.dwas.forEach(d => { dwaMap[d.id] = d; });
+          }
+          
+          if (occActivities.length > 0) {
+            // Calculate values for each activity in this occupation
+            const wageBill = occ.wage_bill || occ.wb || 0;
+            const activities = occActivities.map(sd => {
+              const dwaId = sd[1];
+              const share = sd[2];
+              const dwa = dwaMap[dwaId];
+              // Share should be a decimal (0.2336), but check if it's already a percentage (> 1)
+              // For value calculation, use share as decimal (divide by 100 if it's a percentage)
+              const shareDecimal = share > 1 ? share / 100 : share;
+              // For display, convert to percentage if needed
+              const sharePercent = share > 1 ? share : share * 100;
+              
+              return {
+                dwaId: dwaId,
+                title: dwa ? dwa.title : dwaId,
+                share: sharePercent,
+                value: shareDecimal * wageBill,
+                ai_score: dwa ? dwa.ai_score : 0,
+                task_type: dwa ? dwa.task_type : ''
+              };
+            }).sort((a, b) => b.value - a.value);
+            
+            html += `<h3 style="margin-bottom:12px;color:#333333;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">All Activities (${activities.length})</h3>`;
+            html += `<div class="tam-table-wrap"><table class="tam-table"><thead><tr>
+              <th>Activity</th>
+              <th class="tam-text-right">Share</th>
+              <th class="tam-text-right">Value (TAM)</th>
+              <th>LLM Exposure Score</th>
+              <th>Type</th>
+            </tr></thead><tbody>`;
+            
+            activities.forEach(a => {
+              const barColor = tamExposureColor(a.ai_score);
+              html += `<tr class="tam-row-hover" style="cursor:pointer;" onclick="closeOccDetail(); setTimeout(() => showDwaDetail('${a.dwaId}'), 100);">
+                <td style="color:#333333;"><strong>${a.title}</strong></td>
+                <td class="tam-text-right value-fmt" style="color:#333333;">${a.share.toFixed(3)}%</td>
+                <td class="tam-text-right value-fmt" style="color:#333333;">${fmtVal(a.value)}</td>
+                <td><div class="tam-exposure-bar"><div class="tam-exposure-bar-fill" style="width:${a.ai_score}%;background:${barColor};"></div></div><span style="font-size:0.75em;color:#333333;margin-left:4px;">${a.ai_score}</span></td>
+                <td>${renderTaskTypeBadges(a.task_type || '')}</td>
+              </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+          } else {
+            html += '<p style="color:#333333;"><em>Activity breakdown not available for this occupation.</em></p>';
+          }
+        } else {
+          html += '<p style="color:#333333;"><em>Activity breakdown not available. The occupation-activity mapping data (soc_dwa) was not found in the loaded dataset.</em></p>';
+        }
+        
+        const titleEl = document.getElementById('tam-occ-detail-title');
+        const contentEl = document.getElementById('tam-occ-detail-content');
+        const modalEl = document.getElementById('tam-occ-modal');
+        
+        if (!titleEl || !contentEl || !modalEl) {
+          console.error('Occupation modal elements not found');
+          return;
+        }
+        
+        titleEl.textContent = occ.title + ' (' + soc + ')';
+        contentEl.innerHTML = html;
+        modalEl.classList.add('show');
+      }
+
+      function showDwaDetail(dwaId) {
+        if (!DATA || !DATA.dwas) return;
+        
+        const dwa = DATA.dwas.find(d => d.id === dwaId);
+        if (!dwa || !DATA.soc_dwa) return;
+        
+        // Find all occupations that use this activity
+        const occActivities = DATA.soc_dwa.filter(sd => sd[1] === dwaId);
+        
+        const occsData = DATA.occs || [];
+        
+        const occMap = {};
+        occsData.forEach(o => {
+          const soc = o.soc || o.code;
+          if (soc) occMap[soc] = o;
+        });
+        
+        let html = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div class="tam-stat-card"><div class="number" style="font-size:1.4em;">${fmtVal(dwa.value)}</div><div class="label">Total Economy Value</div></div>
+          <div class="tam-stat-card"><div class="number" style="font-size:1.4em;">${(dwa.share || 0).toFixed(3)}%</div><div class="label">Share of Wage Bill</div></div>
+          <div class="tam-stat-card"><div class="number" style="font-size:1.4em;">${dwa.ai_score || 0}</div><div class="label">LLM Task Exposure Score</div></div>
+        </div>`;
+        
+        html += `<div style="margin-bottom:16px;">
+          <p style="color:#333333;margin-bottom:8px;"><strong>Category:</strong> ${dwa.gwa || ''}</p>
+          <p style="color:#333333;margin-bottom:8px;"><strong>Type:</strong> ${taskLabel(dwa.task_type || '')}</p>
+          <p style="margin-top:12px;margin-bottom:0;">
+            <span style="font-weight:700;color:#333333;">LLM Task Exposure: ${dwa.ai_score || 0}/100</span>
+          </p>
+        </div>`;
+        
+        if (occActivities.length > 0) {
+          // Calculate values for each occupation using this activity
+          const occupations = occActivities.map(sd => {
+            const soc = sd[0];
+            const share = sd[2];
+            const value = sd[3] || 0;
+            const occ = occMap[soc];
+            if (!occ) return null;
+            
+            // Use the value from soc_dwa if available, otherwise calculate from share
+            const wageBill = occ.wage_bill || occ.wb || 0;
+            // Share should be a decimal (0.2336), but check if it's already a percentage (> 1)
+            // For value calculation, use share as decimal (divide by 100 if it's a percentage)
+            const shareDecimal = share > 1 ? share / 100 : share;
+            const finalValue = value > 0 ? value : shareDecimal * wageBill;
+            
+            // For display, convert to percentage if needed
+            const sharePercent = share > 1 ? share : share * 100;
+            
+            return {
+              soc: soc,
+              title: occ.title,
+              value: finalValue,
+              share: sharePercent,
+              emp: occ.emp || occ.TOT_EMP || 0,
+              wage: occ.mean_wage || occ.A_MEAN || 0,
+              ai_score: occ.ai_score || 0
+            };
+          }).filter(o => o !== null).sort((a, b) => b.value - a.value);
+          
+          html += `<h3 style="margin-bottom:12px;color:#333333;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Occupations Using This Activity (${occupations.length})</h3>`;
+          html += `<div class="tam-table-wrap"><table class="tam-table"><thead><tr>
+            <th>Occupation</th>
+            <th class="tam-text-right">Employment</th>
+            <th class="tam-text-right">Mean Wage</th>
+            <th class="tam-text-right">Activity Share</th>
+            <th class="tam-text-right">Value (TAM)</th>
+            <th>LLM Exposure Score</th>
+          </tr></thead><tbody>`;
+          
+          occupations.forEach(o => {
+            const barColor = tamExposureColor(o.ai_score);
+            html += `<tr class="tam-row-hover" style="cursor:pointer;" onclick="closeDwaDetail(); setTimeout(() => showOccDetail('${o.soc}'), 100);">
+              <td style="color:#333333;"><strong>${o.title}</strong><br><span class="tam-text-dim" style="font-size:0.75em;">${o.soc}</span></td>
+              <td class="tam-text-right value-fmt" style="color:#333333;">${fmtNum(o.emp)}</td>
+              <td class="tam-text-right value-fmt" style="color:#333333;">$${fmtNum(o.wage)}</td>
+              <td class="tam-text-right value-fmt" style="color:#333333;">${o.share.toFixed(3)}%</td>
+              <td class="tam-text-right value-fmt" style="color:#333333;">${fmtVal(o.value)}</td>
+              <td><div class="tam-exposure-bar"><div class="tam-exposure-bar-fill" style="width:${o.ai_score}%;background:${barColor};"></div></div><span style="font-size:0.75em;color:#333333;margin-left:4px;">${o.ai_score}</span></td>
+            </tr>`;
+          });
+          
+          html += '</tbody></table></div>';
+        } else {
+          html += '<p style="color:#333333;">No occupations found using this activity.</p>';
+        }
+        
+        const titleEl = document.getElementById('tam-dwa-detail-title');
+        const contentEl = document.getElementById('tam-dwa-detail-content');
+        const modalEl = document.getElementById('tam-dwa-modal');
+        
+        if (!titleEl || !contentEl || !modalEl) {
+          console.error('Detail modal elements not found');
+          return;
+        }
+        
+        titleEl.textContent = dwa.title;
+        contentEl.innerHTML = html;
+        modalEl.classList.add('show');
+      }
+
+      function closeDwaDetail() {
+        document.getElementById('tam-dwa-modal').classList.remove('show');
+      }
+
+      function closeOccDetail() {
+        document.getElementById('tam-occ-modal').classList.remove('show');
+      }
+
+      // Close modals when clicking overlay background or pressing ESC
+      document.addEventListener('DOMContentLoaded', () => {
+        const dwaModal = document.getElementById('tam-dwa-modal');
+        const occModal = document.getElementById('tam-occ-modal');
+        
+        if (dwaModal) {
+          dwaModal.addEventListener('click', (e) => {
+            if (e.target === dwaModal) {
+              closeDwaDetail();
+            }
+          });
+        }
+        
+        if (occModal) {
+          occModal.addEventListener('click', (e) => {
+            if (e.target === occModal) {
+              closeOccDetail();
+            }
+          });
+        }
+        
+        // Close modals on ESC key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (dwaModal && dwaModal.classList.contains('show')) {
+              closeDwaDetail();
+            }
+            if (occModal && occModal.classList.contains('show')) {
+              closeOccDetail();
+            }
+          }
+        });
+      });
+
+      // Make functions globally accessible for onclick handlers
+      window.showDwaDetail = showDwaDetail;
+      window.closeDwaDetail = closeDwaDetail;
+      window.showOccDetail = showOccDetail;
+      window.closeOccDetail = closeOccDetail;
+
+      function occNextPage() {
+        if ((occPage+1) * occPerPage < occFiltered.length) {
+          occPage++;
+          renderOccTable();
+        }
+      }
+
+      function occPrevPage() {
+        if (occPage > 0) {
+          occPage--;
+          renderOccTable();
+        }
+      }
+
+      function initAllCharts() {
+        if (!DATA) return;
+        initCharts();
+        initExposureCharts();
+        initConcentrationCharts();
+        initDwa();
+        initOcc();
+      }
+
+      // Wire up event listeners
+      document.addEventListener('DOMContentLoaded', () => {
+        // DWA search
+        const dwaSearch = document.getElementById('tam-dwa-search');
+        if (dwaSearch) {
+          dwaSearch.addEventListener('input', applyDwaFilters);
+        }
+
+        // DWA filter buttons
+        document.querySelectorAll('#tam-activities .tam-filter-btn[data-filter]').forEach(btn => {
+          btn.addEventListener('click', () => filterDwa(btn.getAttribute('data-filter'), btn));
+        });
+
+        document.querySelectorAll('#tam-activities .tam-filter-btn[data-filter-type]').forEach(btn => {
+          btn.addEventListener('click', () => filterDwaType(btn.getAttribute('data-filter-type'), btn));
+        });
+
+        // DWA pagination
+        document.getElementById('tam-dwa-prev')?.addEventListener('click', dwaPrevPage);
+        document.getElementById('tam-dwa-next')?.addEventListener('click', dwaNextPage);
+        document.getElementById('tam-dwa-prev-2')?.addEventListener('click', dwaPrevPage);
+        document.getElementById('tam-dwa-next-2')?.addEventListener('click', dwaNextPage);
+
+        // DWA table sorting
+        document.querySelectorAll('#tam-dwa-table th[data-sort]').forEach(th => {
+          th.addEventListener('click', () => sortDwa(th.getAttribute('data-sort')));
+        });
+
+        // Occupation search
+        const occSearch = document.getElementById('tam-occ-search');
+        if (occSearch) {
+          occSearch.addEventListener('input', applyOccFilters);
+        }
+
+        // Occupation filter buttons
+        document.querySelectorAll('#tam-occupations .tam-filter-btn[data-occ-filter]').forEach(btn => {
+          btn.addEventListener('click', () => filterOcc(btn.getAttribute('data-occ-filter'), btn));
+        });
+
+        // Occupation pagination
+        document.getElementById('tam-occ-prev')?.addEventListener('click', occPrevPage);
+        document.getElementById('tam-occ-next')?.addEventListener('click', occNextPage);
+        document.getElementById('tam-occ-prev-2')?.addEventListener('click', occPrevPage);
+        document.getElementById('tam-occ-next-2')?.addEventListener('click', occNextPage);
+
+        // Occupation table sorting
+        document.querySelectorAll('#tam-occ-table th[data-sort]').forEach(th => {
+          th.addEventListener('click', () => sortOcc(th.getAttribute('data-sort')));
+        });
+      });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+/* ===== Back Link ===== */
+.back-link {
+    position: fixed;
+    top: 2rem;
+    left: 2.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--dark-gray);
+    text-decoration: none;
+    transition: var(--transition);
+    z-index: 100;
+}
+
+.back-link:hover {
+    opacity: 0.5;
+}
+
+/* ===== Sidebar TOC ===== */
+.essay-sidebar {
+    position: fixed;
+    top: 5rem;
+    left: 2.5rem;
+    width: 210px;
+    z-index: 100;
+}
+
+.toc {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Title: always bold, no bar */
+.toc-title {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--dark-gray);
+    padding-left: 0.75rem;
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.2rem;
+}
+
+/* Section items: indented, light by default */
+.toc-item {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--light-gray);
+    text-decoration: none;
+    padding: 0.25rem 0;
+    padding-left: 1.5rem;
+    border-left: 3px solid transparent;
+    transition: color 0.2s ease, font-weight 0.2s ease, border-color 0.2s ease;
+}
+
+.toc-item:hover {
+    color: var(--dark-gray);
+}
+
+/* Active section: bold, dark, left bar */
+.toc-item.active {
+    color: var(--dark-gray);
+    font-weight: 600;
+    border-left-color: var(--dark-gray);
+}
+
+/* ===== Article Content ===== */
+.essay-article {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+}
+
+.essay-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.essay-page-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    color: var(--dark-gray);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.essay-page-subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--light-gray);
+    font-style: italic;
+    margin: 0 auto 0.9rem;
+    max-width: 620px;
+}
+
+.essay-page-date {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--light-gray);
+    font-style: italic;
+}
+
+/* ===== Essay Body ===== */
+.essay-body p {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--dark-gray);
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
+
+.essay-body h2 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--dark-gray);
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+}
+
+.essay-body .math-block {
+    text-align: center;
+    margin: 2rem 0;
+    font-size: 1.1rem;
+}
+
+/* ===== Code Blocks ===== */
+.essay-body pre {
+    background-color: #f6f6f6;
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+}
+
+.essay-body code {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--dark-gray);
+}
+
+.essay-body p code {
+    background-color: #f6f6f6;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
+
+/* ===== Essay Footer ===== */
+.essay-footer {
+    padding: 2rem 3rem;
+}
+
+/* Page-specific spacing tweaks for "What Companies Won't Automate" */
+body.essay-ai-value .essay-article {
+    padding-top: 2rem;
+}
+
+body.essay-ai-value .essay-header {
+    margin-top: 24vh;
+    margin-bottom: 2.5rem;
+}
+
+body.essay-ai-value .essay-body h2 {
+    margin-top: 4.25rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+    .essay-sidebar {
+        display: none;
+    }
+
+    .back-link {
+        position: relative;
+        top: auto;
+        left: auto;
+        display: block;
+        padding: 1.5rem 2rem 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .back-link {
+        padding: 1.25rem 1.5rem 0;
+        font-size: 0.8rem;
+    }
+
+    .essay-article {
+        padding: 1.5rem 1.5rem 3rem;
+    }
+
+    body.essay-ai-value .essay-article {
+        padding-top: 1.5rem;
+    }
+
+    body.essay-ai-value .essay-header {
+        margin-top: 16vh;
+        margin-bottom: 2rem;
+    }
+
+    body.essay-ai-value .essay-body h2 {
+        margin-top: 3rem;
+    }
+
+    .essay-header {
+        margin-bottom: 2rem;
+    }
+
+    .essay-page-title {
+        font-size: 1.8rem;
+    }
+
+    .essay-page-subtitle {
+        font-size: 0.88rem;
+        max-width: 100%;
+    }
+
+    .essay-body p {
+        font-size: 0.95rem;
+        line-height: 1.7;
+        text-align: left;
+    }
+
+    .essay-body h2 {
+        font-size: 1.3rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .essay-body pre {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .essay-body code {
+        font-size: 0.75rem;
+    }
+
+    .essay-body .math-block {
+        font-size: 0.95rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+    }
+
+    .essay-footer {
+        padding: 1rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .back-link {
+        padding: 1rem 1.25rem 0;
+    }
+
+    .essay-article {
+        padding: 1.25rem 1.25rem 2rem;
+    }
+
+    body.essay-ai-value .essay-article {
+        padding-top: 1.25rem;
+    }
+
+    body.essay-ai-value .essay-header {
+        margin-top: 13vh;
+        margin-bottom: 1.75rem;
+    }
+
+    .essay-page-title {
+        font-size: 1.5rem;
+    }
+
+    .essay-page-subtitle {
+        font-size: 0.84rem;
+    }
+
+    .essay-body p {
+        font-size: 0.88rem;
+    }
+
+    .essay-body h2 {
+        font-size: 1.15rem;
+    }
+
+    .essay-footer {
+        padding: 1rem 1.25rem;
+    }
+}

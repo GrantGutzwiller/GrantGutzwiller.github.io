@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Photo gallery — Grant Gutzwiller">
+    <meta property="og:title" content="Gallery — Grant Gutzwiller">
+    <meta property="og:description" content="Photo gallery — Grant Gutzwiller">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>Gallery - Grant Gutzwiller</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="gallery.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="logo">Grant</a>
+        <div class="nav-links">
+            <a href="gallery.html">Gallery</a>
+            <a href="bookshelf.html">Bookshelf</a>
+            <a href="essays.html">Essays</a>
+            <a href="task_tam.html">Task Atlas</a>
+            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank">LinkedIn</a>
+        </div>
+    </nav>
+
+    <!-- Masonry Gallery -->
+    <div class="gallery-container">
+        <div class="masonry-grid" id="gallery">
+            <!-- Images will be loaded dynamically -->
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="close-lightbox">&times;</span>
+        <img src="" alt="" id="lightbox-img">
+        <div class="lightbox-controls">
+            <button class="prev-btn">‹</button>
+            <button class="next-btn">›</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span class="footer-left">&copy; Grant Gutzwiller</span>
+        <span class="footer-right">Claremont CA, <span id="current-time"></span></span>
+    </footer>
+
+    <script src="gallery.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
