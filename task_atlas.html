@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Task Atlas: activity-level map of U.S. wage value and LLM task exposure.">
+  <meta property="og:title" content="Task Atlas — Grant Gutzwiller">
+  <meta property="og:description" content="Explore U.S. wage value by detailed work activity with task-level LLM exposure.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>Task Atlas | Grant Gutzwiller</title>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="task_atlas.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+</head>
+<body class="task-tam">
+  <nav class="navbar">
+    <a href="index.html" class="logo">Grant</a>
+    <div class="nav-links">
+      <a href="gallery.html">Gallery</a>
+      <a href="bookshelf.html">Bookshelf</a>
+      <a href="essays.html">Essays</a>
+      <a href="task_atlas.html">Task Atlas</a>
+      <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+    </div>
+  </nav>
+
+  <main class="atlas-main">
+    <section class="atlas-hero">
+      <div class="atlas-hero-inner">
+        <p class="atlas-kicker">Task-Level Labor Map</p>
+        <h1 class="atlas-title">Task Atlas</h1>
+        <p class="atlas-subtitle">
+          A map of U.S. wage value across decomposed into detailed task, paired with task-level LLM exposure estimates.
+          Exposure here reflects technical potential for faster task completion at similar quality, not a direct prediction of displacement.
+        </p>
+
+        <div class="atlas-stat-grid">
+          <article class="atlas-stat">
+            <div class="atlas-stat-value" id="atlas-stat-total">—</div>
+            <div class="atlas-stat-label">Total Wage Bill Mapped</div>
+            <div class="atlas-stat-sub" id="atlas-stat-total-sub">—</div>
+          </article>
+          <article class="atlas-stat">
+            <div class="atlas-stat-value" id="atlas-stat-dwas">—</div>
+            <div class="atlas-stat-label">Detailed Work Activities</div>
+            <div class="atlas-stat-sub" id="atlas-stat-dwas-sub">—</div>
+          </article>
+          <article class="atlas-stat">
+            <div class="atlas-stat-value" id="atlas-stat-occs">—</div>
+            <div class="atlas-stat-label">Occupations</div>
+            <div class="atlas-stat-sub" id="atlas-stat-occs-sub">—</div>
+          </article>
+          <article class="atlas-stat">
+            <div class="atlas-stat-value" id="atlas-stat-top100">—</div>
+            <div class="atlas-stat-label">Top 100 Activity Share</div>
+            <div class="atlas-stat-sub" id="atlas-stat-top100-sub">—</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="atlas-wrap">
+      <div id="atlas-loading" class="atlas-loading">Loading Task Atlas data...</div>
+      <div id="atlas-error" class="atlas-error" style="display:none;"></div>
+
+      <div class="atlas-tabs" role="tablist" aria-label="Task Atlas sections">
+        <button class="atlas-tab active" data-panel="atlas-overview" role="tab" aria-selected="true">Overview</button>
+        <button class="atlas-tab" data-panel="atlas-activities" role="tab" aria-selected="false">Activity Explorer</button>
+        <button class="atlas-tab" data-panel="atlas-occupations" role="tab" aria-selected="false">Occupation Explorer</button>
+        <button class="atlas-tab" data-panel="atlas-exposure" role="tab" aria-selected="false">Exposure</button>
+        <button class="atlas-tab" data-panel="atlas-concentration" role="tab" aria-selected="false">Concentration</button>
+        <button class="atlas-tab" data-panel="atlas-methodology" role="tab" aria-selected="false">Methodology</button>
+      </div>
+
+      <section id="atlas-overview" class="atlas-panel active">
+        <article class="atlas-card">
+          <h2>What This Dashboard Shows</h2>
+          <p>
+            This dashboard maps <span id="atlas-insight-total">—</span> in U.S. wages into detailed work activities.
+            In this current dataset, medium-high and high exposure activities account for <span id="atlas-insight-mhhigh">—</span>,
+            while low exposure activities account for <span id="atlas-insight-low">—</span>.
+            Value remains concentrated: the top 10 activities hold <span id="atlas-insight-top10">—</span>, and the top 100 hold <span id="atlas-insight-top100">—</span>.
+          </p>
+        </article>
+
+        <div class="atlas-grid">
+          <article class="atlas-card">
+            <h2>Wage Value by Exposure Category</h2>
+            <div class="atlas-chart-box" aria-label="Wage value by exposure chart">
+              <canvas id="atlas-overview-exposure-chart"></canvas>
+            </div>
+          </article>
+
+          <article class="atlas-card">
+            <h2>Top 20 Activities by Value</h2>
+            <div class="atlas-chart-box" aria-label="Top activities chart">
+              <canvas id="atlas-overview-topdwa-chart"></canvas>
+            </div>
+          </article>
+
+          <article class="atlas-card">
+            <h2>Exposure vs Activity Value</h2>
+            <div class="atlas-chart-box medium" aria-label="Exposure versus value bubble chart">
+              <canvas id="atlas-overview-scatter-chart"></canvas>
+            </div>
+          </article>
+
+          <article class="atlas-card">
+            <h2>Top GWA Categories by Value</h2>
+            <div class="atlas-chart-box medium" aria-label="Top GWA categories chart">
+              <canvas id="atlas-overview-gwa-chart"></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="atlas-activities" class="atlas-panel">
+        <article class="atlas-card">
+          <h2>Activity Explorer</h2>
+          <input class="atlas-search" id="atlas-dwa-search" type="search" placeholder="Search by activity, category, or DWA id..." aria-label="Search activities">
+
+          <div class="atlas-controls-row" style="margin-top:0.8rem;">
+            <span style="font-size:0.78rem;color:#66707f;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Exposure</span>
+            <div class="atlas-pill-group" id="atlas-dwa-exposure-filters"></div>
+          </div>
+
+          <div class="atlas-controls-row">
+            <span style="font-size:0.78rem;color:#66707f;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Task Type</span>
+            <div class="atlas-pill-group" id="atlas-dwa-tasktype-filters"></div>
+          </div>
+
+          <div class="atlas-pager">
+            <span id="atlas-dwa-count">Showing — activities</span>
+            <div class="atlas-pager-controls">
+              <button id="atlas-dwa-prev" type="button">Prev</button>
+              <span id="atlas-dwa-page">Page —</span>
+              <button id="atlas-dwa-next" type="button">Next</button>
+            </div>
+          </div>
+
+          <div class="atlas-table-wrap">
+            <table class="atlas-table">
+              <thead>
+                <tr>
+                  <th data-table="dwa" data-sort="rank">Rank <span class="sort-indicator"></span></th>
+                  <th data-table="dwa" data-sort="title">Activity <span class="sort-indicator"></span></th>
+                  <th data-table="dwa" data-sort="gwa">GWA Category <span class="sort-indicator"></span></th>
+                  <th data-table="dwa" data-sort="value" class="num">Value <span class="sort-indicator"></span></th>
+                  <th data-table="dwa" data-sort="share" class="num">Share <span class="sort-indicator"></span></th>
+                  <th data-table="dwa" data-sort="ai_score">Exposure <span class="sort-indicator"></span></th>
+                  <th data-table="dwa" data-sort="task_type">Task Type <span class="sort-indicator"></span></th>
+                </tr>
+              </thead>
+              <tbody id="atlas-dwa-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="atlas-occupations" class="atlas-panel">
+        <article class="atlas-card">
+          <h2>Occupation Explorer</h2>
+          <input class="atlas-search" id="atlas-occ-search" type="search" placeholder="Search by occupation, SOC code, or top activity..." aria-label="Search occupations">
+
+          <div class="atlas-controls-row" style="margin-top:0.8rem;">
+            <span style="font-size:0.78rem;color:#66707f;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Exposure</span>
+            <div class="atlas-pill-group" id="atlas-occ-exposure-filters"></div>
+          </div>
+
+          <div class="atlas-pager">
+            <span id="atlas-occ-count">Showing — occupations</span>
+            <div class="atlas-pager-controls">
+              <button id="atlas-occ-prev" type="button">Prev</button>
+              <span id="atlas-occ-page">Page —</span>
+              <button id="atlas-occ-next" type="button">Next</button>
+            </div>
+          </div>
+
+          <div class="atlas-table-wrap">
+            <table class="atlas-table">
+              <thead>
+                <tr>
+                  <th data-table="occ" data-sort="title">Occupation <span class="sort-indicator"></span></th>
+                  <th data-table="occ" data-sort="emp" class="num">Employment <span class="sort-indicator"></span></th>
+                  <th data-table="occ" data-sort="mean_wage" class="num">Mean Wage <span class="sort-indicator"></span></th>
+                  <th data-table="occ" data-sort="wage_bill" class="num">Wage Bill <span class="sort-indicator"></span></th>
+                  <th data-table="occ" data-sort="ai_score">Exposure <span class="sort-indicator"></span></th>
+                  <th data-table="occ" data-sort="high_pct" class="num">High Exp % <span class="sort-indicator"></span></th>
+                  <th>Top Activity</th>
+                </tr>
+              </thead>
+              <tbody id="atlas-occ-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="atlas-exposure" class="atlas-panel">
+        <article class="atlas-card">
+          <h2>Exposure Interpretation</h2>
+          <p>
+            Exposure represents technical capability for time reduction at similar quality.
+            It is not a direct claim about adoption speed, full replacement, or employment outcomes.
+            Use it as a capability map layered onto economic value.
+          </p>
+        </article>
+
+        <div class="atlas-grid">
+          <article class="atlas-card">
+            <h2>Wage Bill by Exposure Category</h2>
+            <div class="atlas-chart-box" aria-label="Exposure wage bar chart">
+              <canvas id="atlas-exposure-wage-chart"></canvas>
+            </div>
+          </article>
+
+          <article class="atlas-card">
+            <h2>Activity Count by Exposure Category</h2>
+            <div class="atlas-chart-box" aria-label="Exposure count chart">
+              <canvas id="atlas-exposure-count-chart"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <article class="atlas-card">
+          <h2>Exposure Spectrum Across All Activities</h2>
+          <div class="atlas-chart-box tall" aria-label="Exposure spectrum line chart">
+            <canvas id="atlas-exposure-spectrum-chart"></canvas>
+          </div>
+        </article>
+
+        <div class="atlas-grid">
+          <article class="atlas-card">
+            <h2>Most Exposed High-Value Activities</h2>
+            <div id="atlas-high-exposed-list"></div>
+          </article>
+
+          <article class="atlas-card">
+            <h2>Lowest-Exposure High-Value Activities</h2>
+            <div id="atlas-low-exposed-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="atlas-concentration" class="atlas-panel">
+        <article class="atlas-card">
+          <h2>Concentration View</h2>
+          <p>
+            Activity value is heavy-tailed. A relatively small set of activities carries a large share of national wages,
+            which means capability shifts in those activities can matter disproportionately.
+          </p>
+        </article>
+
+        <article class="atlas-card">
+          <h2>Pareto Curve</h2>
+          <div class="atlas-chart-box" aria-label="Pareto concentration chart">
+            <canvas id="atlas-concentration-pareto-chart"></canvas>
+          </div>
+        </article>
+
+        <div class="atlas-grid">
+          <article class="atlas-card">
+            <h2>Value Tiers</h2>
+            <div class="atlas-chart-box medium" aria-label="Value tiers chart">
+              <canvas id="atlas-concentration-tier-chart"></canvas>
+            </div>
+          </article>
+
+          <article class="atlas-card">
+            <h2>Share by Rank Bucket</h2>
+            <div class="atlas-chart-box medium" aria-label="Rank bucket chart">
+              <canvas id="atlas-concentration-bucket-chart"></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="atlas-methodology" class="atlas-panel">
+        <article class="atlas-card">
+          <h2>Dataset Notes</h2>
+          <div id="atlas-methods-data-notes"></div>
+        </article>
+
+        <article class="atlas-card">
+          <h2>Method Details</h2>
+          <div id="atlas-methods-content" class="atlas-methods">
+            <p>Loading methods...</p>
+          </div>
+        </article>
+      </section>
+
+      <div class="atlas-foot">
+        Task Atlas combines O*NET task structure, OEWS wages and employment, and GPTs-are-GPTs exposure labels.
+      </div>
+    </section>
+  </main>
+
+  <div id="atlas-dwa-modal" class="atlas-modal-overlay" aria-hidden="true">
+    <article class="atlas-modal" role="dialog" aria-modal="true" aria-labelledby="atlas-dwa-modal-title">
+      <header class="atlas-modal-head">
+        <h3 id="atlas-dwa-modal-title">Activity Detail</h3>
+        <button type="button" class="atlas-modal-close" data-close-modal="atlas-dwa-modal" aria-label="Close activity details">×</button>
+      </header>
+      <div class="atlas-modal-body" id="atlas-dwa-modal-body"></div>
+    </article>
+  </div>
+
+  <div id="atlas-occ-modal" class="atlas-modal-overlay" aria-hidden="true">
+    <article class="atlas-modal" role="dialog" aria-modal="true" aria-labelledby="atlas-occ-modal-title">
+      <header class="atlas-modal-head">
+        <h3 id="atlas-occ-modal-title">Occupation Detail</h3>
+        <button type="button" class="atlas-modal-close" data-close-modal="atlas-occ-modal" aria-label="Close occupation details">×</button>
+      </header>
+      <div class="atlas-modal-body" id="atlas-occ-modal-body"></div>
+    </article>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-left">&copy; Grant Gutzwiller</span>
+    <span class="footer-right">Claremont CA, <span id="current-time"></span></span>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="script.js"></script>
+  <script src="task_atlas.js"></script>
+</body>
+</html>
