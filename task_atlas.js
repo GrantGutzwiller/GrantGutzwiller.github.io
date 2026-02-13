@@ -705,7 +705,7 @@
     updateChart('overviewExposure', 'atlas-overview-exposure-chart', {
       type: 'doughnut',
       data: {
-        labels: EXPOSURE_ORDER.map((cat) => EXPOSURE_LEGEND_LABEL[cat] || cat),
+        labels: EXPOSURE_ORDER.map((cat) => cat),
         datasets: [{
           data: exposureValues,
           backgroundColor: EXPOSURE_ORDER.map((cat) => EXPOSURE_COLORS[cat]),
@@ -723,7 +723,7 @@
     updateChart('overviewTopDwa', 'atlas-overview-topdwa-chart', {
       type: 'bar',
       data: {
-        labels: top20.map((row) => truncate(row.title, 64)),
+        labels: top20.map((row) => truncate(row.title, 38)),
         datasets: [{
           data: top20.map((row) => row.value),
           borderWidth: 1,
@@ -818,7 +818,7 @@
     updateChart('overviewGwa', 'atlas-overview-gwa-chart', {
       type: 'bar',
       data: {
-        labels: topGwas.map((row) => truncate(row.gwa, 54)),
+        labels: topGwas.map((row) => truncate(row.gwa, 40)),
         datasets: [{
           data: topGwas.map((row) => row.value),
           backgroundColor: '#8791a1',
