@@ -126,6 +126,18 @@ body.homepage {
     margin-bottom: 0.5rem;
 }
 
+.section-heading a {
+    color: inherit;
+    text-decoration: none;
+    font: inherit;
+    letter-spacing: inherit;
+    transition: var(--transition);
+}
+
+.section-heading a:hover {
+    color: var(--light-gray);
+}
+
 .section-text {
     font-family: var(--font-sans);
     font-size: 0.95rem;
