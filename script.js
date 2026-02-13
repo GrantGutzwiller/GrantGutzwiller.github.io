@@ -24,28 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Page transition: fade out on internal link clicks
-    document.querySelectorAll('a').forEach((link) => {
+    document.querySelectorAll('a').forEach(link => {
         const href = link.getAttribute('href');
         if (!href) return;
-
-        const isExternal = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href);
-        if (isExternal || href.startsWith('#') || href.startsWith('javascript')) return;
+        // Skip external links, anchors, and javascript
+        if (href.startsWith('http') || href.startsWith('#') || href.startsWith('javascript')) return;
 
         link.addEventListener('click', (e) => {
-            // Preserve expected browser behavior for new tab/window and downloads.
-            if (
-                e.defaultPrevented ||
-                e.button !== 0 ||
-                e.metaKey ||
-                e.ctrlKey ||
-                e.shiftKey ||
-                e.altKey ||
-                link.hasAttribute('download') ||
-                (link.target && link.target !== '_self')
-            ) {
-                return;
-            }
-
             e.preventDefault();
             document.body.classList.remove('loaded');
             document.body.classList.add('fade-out');

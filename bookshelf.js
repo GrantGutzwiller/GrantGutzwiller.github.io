@@ -33,7 +33,7 @@ function loadBookshelf() {
 
         const img = document.createElement('img');
         img.src = bookPath;
-        img.alt = `Book cover (${index + 1} of ${books.length})`;
+        img.alt = `Book ${index + 1}`;
         img.loading = 'lazy';
 
         item.appendChild(img);
