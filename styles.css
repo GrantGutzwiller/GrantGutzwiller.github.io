@@ -160,7 +160,7 @@ body.no-scroll .footer {
     margin-top: auto;
 }
 
-/* Strong, page-specific footer inset for the main homepage (index.html) */
+/* Strong, page-specific footer inset for the main homepage */
 body.homepage.no-scroll .homepage-footer {
     position: relative;
     bottom: calc(2.75rem + env(safe-area-inset-bottom, 0px));
