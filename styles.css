@@ -184,10 +184,13 @@ body.homepage.no-scroll .homepage-footer {
 @media (max-width: 768px) {
     .navbar {
         padding: 1.5rem 1.5rem 0;
+        gap: 0.9rem;
     }
 
     .nav-links {
-        gap: 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .homepage-content {
@@ -234,15 +237,20 @@ body.homepage.no-scroll .homepage-footer {
 
 @media (max-width: 480px) {
     .navbar {
-        padding: 1.25rem 1.25rem 0;
+        padding: 1.1rem 1.1rem 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
     }
 
     .nav-links {
-        gap: 0.75rem;
+        width: 100%;
+        gap: 0.85rem;
+        justify-content: flex-start;
     }
 
     .nav-links a {
-        font-size: 0.8rem;
+        font-size: 0.86rem;
     }
 
     .logo {

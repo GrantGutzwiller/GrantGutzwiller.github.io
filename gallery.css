@@ -70,6 +70,9 @@
     position: absolute;
     top: 2rem;
     right: 3rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
     font-size: 3rem;
     color: var(--white);
     cursor: pointer;
@@ -79,7 +82,7 @@
 }
 
 .close-lightbox:hover {
-    color: var(--accent-coral);
+    color: rgba(255, 255, 255, 0.78);
     transform: scale(1.1);
 }
 
@@ -116,8 +119,8 @@
 
 .prev-btn:hover,
 .next-btn:hover {
-    background-color: var(--primary-green);
-    border-color: var(--primary-green);
+    background-color: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.88);
     transform: scale(1.1);
 }
 

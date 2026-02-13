@@ -54,7 +54,7 @@ function loadGallery() {
 
         const img = document.createElement('img');
         img.src = imagePath;
-        img.alt = `Gallery image ${index + 1}`;
+        img.alt = `Photo from Grant's gallery (${index + 1} of ${galleryImages.length})`;
         img.loading = 'lazy';
         img.dataset.index = index;
 
