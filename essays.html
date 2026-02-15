@@ -5,48 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Essays on AI, economics, and philosophy — Grant Gutzwiller">
     <meta property="og:title" content="Essays — Grant Gutzwiller">
-    <meta property="og:description" content="Essays on AI, economics, and philosophy — Grant Gutzwiller">
+    <meta property="og:description" content="Essays on AI, economics, and philosophy">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <title>Essays - Grant Gutzwiller</title>
+    <title>Essays — Grant Gutzwiller</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="essays.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="no-scroll">
+<body class="loaded">
     <!-- Navigation -->
     <nav class="navbar">
-        <a href="/" class="logo">Grant</a>
+        <a href="/" class="logo">Grant Gutzwiller</a>
         <div class="nav-links">
-            <a href="/gallery">Gallery</a>
+            <a href="/essays" class="active">Essays</a>
+            <a href="/projects" data-feature="projects">Projects</a>
             <a href="/bookshelf">Bookshelf</a>
-            <a href="/essays">Essays</a>
+            <a href="/gallery">Gallery</a>
             <a href="/task_atlas">Task Atlas</a>
-            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </div>
     </nav>
 
+    <!-- Masthead -->
+    <header class="masthead">
+        <div>
+            <div class="masthead-label">Writing · Philosophy & Economics</div>
+            <h1 class="masthead-title">Essays</h1>
+        </div>
+        <div class="masthead-meta">
+            <div>2 Published</div>
+            <div>2024 – Present</div>
+        </div>
+    </header>
+
     <!-- Essays List -->
-    <main class="essays-container">
-        <div class="essays-list">
-            <a href="/what-companies-wont-automate" class="essay-row">
-                <div class="essay-info">
-                    <span class="essay-title">What Companies Won't Automate: Where AI Value Actually Accrues</span>
-                    <span class="essay-summary">The real AI opportunity isn't in what can be automated, but in who captures the value when it is.</span>
+    <main class="essays-main">
+        <div class="essays-container">
+            <article class="essay-row">
+                <span class="essay-index">01</span>
+                <time class="essay-date">Feb 2024</time>
+                <div class="essay-content">
+                    <h2 class="essay-title">
+                        <a href="/what-companies-wont-automate">What Companies Won't Automate</a>
+                    </h2>
+                    <p class="essay-summary">The real AI opportunity isn't in what can be automated, but in who captures the value when it is.</p>
                 </div>
-                <span class="essay-date">Feb 2026</span>
-            </a>
+                <span class="essay-category">Economics</span>
+                <span class="essay-arrow">→</span>
+            </article>
+
+            <article class="essay-row">
+                <span class="essay-index">02</span>
+                <time class="essay-date">2024</time>
+                <div class="essay-content">
+                    <h2 class="essay-title">
+                        <a href="/philosophy-of-imagination">Mechanical Outputs or Imaginative Acts</a>
+                    </h2>
+                    <p class="essay-summary">Can AI systems exhibit genuine imagination, or are they limited to sophisticated pattern completion? An investigation into machine consciousness.</p>
+                </div>
+                <span class="essay-category">Philosophy</span>
+                <span class="essay-arrow">→</span>
+            </article>
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="footer">
         <span class="footer-left">&copy; Grant Gutzwiller</span>
-        <span class="footer-right">Claremont CA, <span id="current-time"></span></span>
+        <span class="footer-right">Claremont, CA · <span id="current-time"></span></span>
     </footer>
 
+    <script src="site-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

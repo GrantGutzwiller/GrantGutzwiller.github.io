@@ -1,0 +1,290 @@
+/* ===== CSS Variables ===== */
+:root {
+    --dark-gray: #2B2D42;
+    --light-gray: #8D99AE;
+    --white: #FFFFFF;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Global Styles ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    color: var(--dark-gray);
+    background-color: var(--white);
+    line-height: 1.6;
+    overflow-x: hidden;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+body.loaded {
+    opacity: 1;
+}
+
+body.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* ===== Homepage ===== */
+body.homepage {
+    /* uses body.no-scroll for viewport lock */
+}
+
+/* ===== Navigation ===== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 3rem 0 3rem;
+    background-color: var(--white);
+    z-index: 1000;
+}
+
+.logo {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--dark-gray);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.logo:hover {
+    opacity: 0.6;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2.5rem;
+}
+
+.nav-links a {
+    color: var(--dark-gray);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 400;
+    transition: var(--transition);
+}
+
+.nav-links a:hover {
+    opacity: 0.5;
+}
+
+/* ===== Homepage Content ===== */
+.homepage-content {
+    max-width: 580px;
+    padding: 4rem 3rem 0 3rem;
+}
+
+.main-title {
+    font-family: var(--font-sans);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--dark-gray);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.intro-text {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--dark-gray);
+    margin-bottom: 2.5rem;
+}
+
+.intro-text a {
+    color: var(--dark-gray);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.intro-text a:hover {
+    color: var(--light-gray);
+}
+
+.text-section {
+    margin-bottom: 2.5rem;
+}
+
+.section-heading {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--dark-gray);
+    margin-bottom: 0.5rem;
+}
+
+.section-heading a {
+    color: inherit;
+    text-decoration: none;
+    font: inherit;
+    letter-spacing: inherit;
+    transition: var(--transition);
+}
+
+.section-heading a:hover {
+    color: var(--light-gray);
+}
+
+.section-text {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--dark-gray);
+}
+
+/* ===== Footer ===== */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    background-color: var(--white);
+    color: var(--light-gray);
+    font-size: 0.85rem;
+}
+
+/* Pin footer to bottom on no-scroll pages */
+body.no-scroll {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+body.no-scroll main {
+    flex: 1;
+}
+
+body.no-scroll .footer {
+    margin-top: auto;
+}
+
+/* Strong, page-specific footer inset for the main homepage */
+body.homepage.no-scroll .homepage-footer {
+    position: relative;
+    bottom: calc(2.75rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 1.5rem !important;
+    margin-bottom: 0 !important;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1.5rem 1.5rem 0;
+    }
+
+    .nav-links {
+        gap: 1.5rem;
+    }
+
+    .homepage-content {
+        padding: 2.5rem 1.5rem 0;
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .intro-text {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .text-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-text {
+        font-size: 0.9rem;
+    }
+
+    .footer {
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+    }
+
+    body.homepage.no-scroll .homepage-footer {
+        position: relative;
+        bottom: calc(1.9rem + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 1rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Allow scrolling on mobile for no-scroll pages */
+    body.no-scroll {
+        height: auto;
+        overflow: auto;
+        min-height: 100vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 1.25rem 1.25rem 0;
+    }
+
+    .nav-links {
+        gap: 0.75rem;
+    }
+
+    .nav-links a {
+        font-size: 0.8rem;
+    }
+
+    .logo {
+        font-size: 1rem;
+    }
+
+    .homepage-content {
+        padding: 2rem 1.25rem 0;
+    }
+
+    .main-title {
+        font-size: 2rem;
+    }
+
+    .intro-text {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        margin-bottom: 1.25rem;
+    }
+
+    .text-section {
+        margin-bottom: 1.25rem;
+    }
+
+    .section-heading {
+        font-size: 0.65rem;
+    }
+
+    .section-text {
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    .footer {
+        padding: 1rem 1.25rem;
+        font-size: 0.7rem;
+    }
+
+    body.homepage.no-scroll .homepage-footer {
+        position: relative;
+        bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 1rem !important;
+        margin-bottom: 0 !important;
+    }
+}

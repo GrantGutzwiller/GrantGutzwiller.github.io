@@ -5,35 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Photo gallery — Grant Gutzwiller">
     <meta property="og:title" content="Gallery — Grant Gutzwiller">
-    <meta property="og:description" content="Photo gallery — Grant Gutzwiller">
+    <meta property="og:description" content="Photo gallery">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <title>Gallery - Grant Gutzwiller</title>
+    <title>Gallery — Grant Gutzwiller</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="gallery.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="loaded">
     <!-- Navigation -->
     <nav class="navbar">
-        <a href="/" class="logo">Grant</a>
+        <a href="/" class="logo">Grant Gutzwiller</a>
         <div class="nav-links">
-            <a href="/gallery">Gallery</a>
-            <a href="/bookshelf">Bookshelf</a>
             <a href="/essays">Essays</a>
+            <a href="/projects" data-feature="projects">Projects</a>
+            <a href="/bookshelf">Bookshelf</a>
+            <a href="/gallery" class="active">Gallery</a>
             <a href="/task_atlas">Task Atlas</a>
-            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </div>
     </nav>
 
+    <!-- Masthead -->
+    <header class="masthead">
+        <div>
+            <div class="masthead-label">Photography</div>
+            <h1 class="masthead-title">Gallery</h1>
+        </div>
+        <div class="masthead-meta">
+            <div id="image-count">Images</div>
+            <div>Various Locations</div>
+        </div>
+    </header>
+
     <!-- Masonry Gallery -->
-    <div class="gallery-container">
+    <main class="gallery-main">
         <div class="masonry-grid" id="gallery">
             <!-- Images will be loaded dynamically -->
         </div>
-    </div>
+    </main>
 
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
@@ -48,9 +58,10 @@
     <!-- Footer -->
     <footer class="footer">
         <span class="footer-left">&copy; Grant Gutzwiller</span>
-        <span class="footer-right">Claremont CA, <span id="current-time"></span></span>
+        <span class="footer-right">Claremont, CA · <span id="current-time"></span></span>
     </footer>
 
+    <script src="site-config.js"></script>
     <script src="gallery.js"></script>
     <script src="script.js"></script>
 </body>

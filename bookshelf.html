@@ -5,31 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Bookshelf — Grant Gutzwiller">
     <meta property="og:title" content="Bookshelf — Grant Gutzwiller">
-    <meta property="og:description" content="Books I've been reading — Grant Gutzwiller">
+    <meta property="og:description" content="Books I've been reading">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <title>Bookshelf - Grant Gutzwiller</title>
+    <title>Bookshelf — Grant Gutzwiller</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="bookshelf.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="no-scroll">
+<body class="loaded">
     <!-- Navigation -->
     <nav class="navbar">
-        <a href="/" class="logo">Grant</a>
+        <a href="/" class="logo">Grant Gutzwiller</a>
         <div class="nav-links">
-            <a href="/gallery">Gallery</a>
-            <a href="/bookshelf">Bookshelf</a>
             <a href="/essays">Essays</a>
+            <a href="/projects" data-feature="projects">Projects</a>
+            <a href="/bookshelf" class="active">Bookshelf</a>
+            <a href="/gallery">Gallery</a>
             <a href="/task_atlas">Task Atlas</a>
-            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </div>
     </nav>
 
+    <!-- Masthead -->
+    <header class="masthead">
+        <div>
+            <div class="masthead-label">Reading · Philosophy & Economics</div>
+            <h1 class="masthead-title">Bookshelf</h1>
+        </div>
+        <div class="masthead-meta">
+            <div id="book-count">Books</div>
+            <div>Updated Regularly</div>
+        </div>
+    </header>
+
     <!-- Books Grid -->
-    <main class="bookshelf-container">
+    <main class="bookshelf-main">
         <div class="books-grid" id="bookshelf">
             <!-- Books will be loaded dynamically -->
         </div>
@@ -38,9 +48,10 @@
     <!-- Footer -->
     <footer class="footer">
         <span class="footer-left">&copy; Grant Gutzwiller</span>
-        <span class="footer-right">Claremont CA, <span id="current-time"></span></span>
+        <span class="footer-right">Claremont, CA · <span id="current-time"></span></span>
     </footer>
 
+    <script src="site-config.js"></script>
     <script src="bookshelf.js"></script>
     <script src="script.js"></script>
 </body>

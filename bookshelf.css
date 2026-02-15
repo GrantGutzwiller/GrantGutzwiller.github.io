@@ -1,81 +1,81 @@
-/* ===== Bookshelf Container ===== */
-.bookshelf-container {
-    padding: 1.5rem 4rem;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    overflow: hidden;
+/* ══════════════════════════════════════════════════════════════════
+   BOOKSHELF STYLES
+   ══════════════════════════════════════════════════════════════════ */
+
+.bookshelf-main {
+  padding: 3.5rem 5rem;
+  animation: fadeUp 0.8s 0.2s ease forwards;
+  opacity: 0;
 }
 
 .books-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(3, auto);
-    gap: 1.5rem;
-    width: 100%;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .book-item {
-    position: relative;
-    overflow: hidden;
-    border-radius: 4px;
-    transition: var(--transition);
-    cursor: pointer;
-    max-height: 22vh;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  transition: all var(--transition-base);
+  background: var(--bg-white);
 }
 
 .book-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    border-radius: 4px;
-    transition: var(--transition);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-base);
 }
 
 .book-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(26, 23, 20, 0.12);
+  border-color: var(--accent-light);
 }
 
-/* ===== Responsive Design ===== */
-@media (max-width: 1024px) {
-    .books-grid {
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1rem;
-    }
-
-    .bookshelf-container {
-        padding: 1.5rem;
-    }
+.book-item:hover img {
+  transform: scale(1.05);
 }
 
-@media (max-width: 768px) {
-    .books-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.75rem;
-    }
+/* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .books-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
 
-    .book-item {
-        max-height: none;
-    }
+@media (max-width: 900px) {
+  .bookshelf-main {
+    padding: 3rem 2rem;
+  }
 
-    .bookshelf-container {
-        padding: 1.5rem;
-        overflow: visible;
-    }
+  .books-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .bookshelf-main {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
-    .books-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.5rem;
-    }
-
-    .bookshelf-container {
-        padding: 1rem;
-    }
+  .books-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
 }

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mechanical Outputs or Imaginative Acts — Grant Gutzwiller</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f2ec;
+      --ink: #1a1714;
+      --ink-muted: #6b6560;
+      --ink-faint: #b5b0aa;
+      --accent: #c94a2b;
+      --accent-light: #e8c4ba;
+      --rule: #d4cfc9;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--serif);
+      min-height: 100vh;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── MASTHEAD ── */
+    .masthead {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding: 4rem 5rem 2rem;
+      border-bottom: 2px solid var(--ink);
+      gap: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards;
+    }
+
+    .masthead-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 1rem;
+    }
+
+    .masthead-title {
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+    }
+
+    .masthead-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .masthead-meta {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--ink-muted);
+      line-height: 2;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── GRID LAYOUT ── */
+    .project-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 0;
+      padding: 0 5rem;
+      animation: fadeUp 0.8s 0.2s ease forwards;
+      opacity: 0;
+    }
+
+    /* ── INTRO COLUMN ── */
+    .col-intro {
+      grid-column: 1;
+      padding: 3.5rem 4rem 3.5rem 0;
+      border-right: 1px solid var(--rule);
+    }
+
+    .question-block {
+      margin-bottom: 3rem;
+    }
+
+    .question-mark {
+      font-size: 5rem;
+      font-weight: 300;
+      color: var(--accent-light);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-text {
+      font-size: 1.35rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--ink);
+      max-width: 36ch;
+    }
+
+    .question-text em {
+      font-style: italic;
+    }
+
+    .body-copy {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.75;
+      color: var(--ink);
+      max-width: 54ch;
+    }
+
+    .body-copy p + p {
+      margin-top: 1.2rem;
+    }
+
+    /* ── SIDEBAR ── */
+    .col-sidebar {
+      grid-column: 2;
+      padding: 3.5rem 0 3.5rem 3.5rem;
+    }
+
+    .sidebar-block {
+      margin-bottom: 3rem;
+    }
+
+    .sidebar-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .sidebar-heading {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sidebar-heading::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--accent-light);
+    }
+
+    /* Dimension stack */
+    .dimension-list {
+      list-style: none;
+    }
+
+    .dimension-list li {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 0.9rem;
+      font-weight: 400;
+    }
+
+    .dimension-list li:first-child {
+      border-top: 1px solid var(--rule);
+    }
+
+    .dim-index {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--ink-faint);
+      min-width: 1.2rem;
+    }
+
+    .dim-label {
+      font-style: italic;
+      flex: 1;
+    }
+
+    /* Collaborator block */
+    .collab-box {
+      background: white;
+      border: 1px solid var(--rule);
+      padding: 1.4rem 1.6rem;
+    }
+
+    .collab-name {
+      font-size: 1.0rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .collab-role {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.08em;
+      line-height: 1.7;
+    }
+
+    /* ── FINDINGS ROW ── */
+    .findings-row {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      animation: fadeUp 0.8s 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    .finding-card {
+      padding: 2.5rem;
+      border-right: 1px solid var(--rule);
+      position: relative;
+      transition: background 0.25s ease;
+    }
+
+    .finding-card:last-child {
+      border-right: none;
+    }
+
+    .finding-card:hover {
+      background: white;
+    }
+
+    .finding-number {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--ink-faint);
+      letter-spacing: 0.12em;
+      margin-bottom: 1rem;
+    }
+
+    .finding-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+
+    .finding-title em {
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .finding-body {
+      font-size: 0.88rem;
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--ink-muted);
+    }
+
+    .finding-marker {
+      position: absolute;
+      top: 2.5rem;
+      right: 2.5rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .finding-card:hover .finding-marker {
+      opacity: 1;
+    }
+
+    /* ── FOOTER STRIP ── */
+    .footer-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 5rem;
+      border-top: 2px solid var(--ink);
+      margin-top: 0;
+      animation: fadeUp 0.8s 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    .footer-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .footer-status {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .masthead,
+      .footer-strip { padding: 2.5rem 2rem; }
+      .project-grid { grid-template-columns: 1fr; padding: 0 2rem; }
+      .col-intro    { border-right: none; border-bottom: 1px solid var(--rule); padding: 2.5rem 0; }
+      .col-sidebar  { padding: 2.5rem 0; }
+      .findings-row { grid-template-columns: 1fr; }
+      .finding-card { border-right: none; border-bottom: 1px solid var(--rule); }
+    }
+  </style>
+</head>
+<body class="loaded">
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/" class="logo">Grant Gutzwiller</a>
+    <div class="nav-links">
+      <a href="/essays">Essays</a>
+      <a href="/projects" data-feature="projects">Projects</a>
+      <a href="/bookshelf">Bookshelf</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/task_atlas">Task Atlas</a>
+      <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+    </div>
+  </nav>
+
+  <!-- MASTHEAD -->
+  <header class="masthead">
+    <div>
+      <div class="masthead-label">Research · Philosophy of Mind &amp; AI</div>
+      <h1 class="masthead-title">Mechanical Outputs<br>or <em>Imaginative Acts</em></h1>
+    </div>
+    <div class="masthead-meta">
+      <div>Claremont McKenna College</div>
+      <div>2024 – Ongoing</div>
+      <div>Philosophy / Cognitive Science</div>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <main>
+    <div class="project-grid">
+
+      <!-- LEFT: Intro + body -->
+      <div class="col-intro">
+        <div class="question-block">
+          <div class="question-mark">&ldquo;</div>
+          <p class="question-text">
+            What would it mean for an AI system to exhibit something like imagination—<em>not just pattern completion?</em>
+          </p>
+        </div>
+        <div class="body-copy">
+          <p>
+            This project began as a philosophical problem: can the rich tradition of thinking about human imagination
+            translate into anything tractable about machine behavior? Rather than defaulting to either
+            pure anthropomorphism or blanket skepticism, the work demanded conceptual precision first.
+          </p>
+          <p>
+            Working under philosopher Amy Kind, I examined how major philosophical frameworks—Descartes,
+            Berkeley, Searle, Chalmers—define imagination and mapped where those definitions align or conflict
+            with what current AI systems actually do. Key distinctions emerged early: imagination is not the same
+            as memory recall, recombination, or statistical prediction. These are often conflated, but they come
+            apart under pressure.
+          </p>
+          <p>
+            The core finding is that imagination, as a genuine mental process, presupposes two things current
+            systems lack: semantic <em>understanding</em> and phenomenal <em>consciousness</em>. Creative output—
+            however impressive—is not evidence of either. A pufferfish creates geometric sand formations
+            of stunning regularity; a simulation of simple rules reproduces them exactly. Appearance and
+            process are not the same thing.
+          </p>
+          <p>
+            The practical upshot: if we want AI systems capable of something genuinely imagination-like, larger
+            models trained on more data will not get there. It will require new architectures—embodied, recurrent,
+            self-reflective—that engage with the world rather than model its surface.
+          </p>
+        </div>
+      </div>
+
+      <!-- RIGHT: Sidebar -->
+      <div class="col-sidebar">
+
+        <div class="sidebar-block">
+          <div class="sidebar-heading">Imagination as a Stack</div>
+          <ul class="dimension-list">
+            <li><span class="dim-index">01</span><span class="dim-label">Novelty</span></li>
+            <li><span class="dim-index">02</span><span class="dim-label">Coherence</span></li>
+            <li><span class="dim-index">03</span><span class="dim-label">Constraint handling</span></li>
+            <li><span class="dim-index">04</span><span class="dim-label">Perspective-shifting</span></li>
+            <li><span class="dim-index">05</span><span class="dim-label">Understanding (precondition)</span></li>
+            <li><span class="dim-index">06</span><span class="dim-label">Consciousness (precondition)</span></li>
+          </ul>
+        </div>
+
+        <div class="sidebar-block">
+          <div class="sidebar-heading">Advisor</div>
+          <div class="collab-box">
+            <div class="collab-name">Amy Kind</div>
+            <div class="collab-role">
+              Russell K. Pitzer Professor of Philosophy<br>
+              Pacific Division Director,<br>
+              American Philosophical Association
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM: Findings -->
+      <div class="findings-row">
+        <div class="finding-card">
+          <div class="finding-marker"></div>
+          <div class="finding-number">Finding 01</div>
+          <h3 class="finding-title">Output is not <em>evidence</em> of process</h3>
+          <p class="finding-body">
+            AI systems score in the top percentile on the Torrance Tests for creative thinking. But
+            output-based evaluation cannot distinguish genuine imaginative process from sophisticated
+            rule-based generation—the same limitation that applies to a pufferfish drawing circles in sand.
+          </p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-marker"></div>
+          <div class="finding-number">Finding 02</div>
+          <h3 class="finding-title">Syntax <em>without</em> semantics</h3>
+          <p class="finding-body">
+            Following Searle's Chinese Room, current LLMs manipulate formal symbols without semantic
+            understanding. The Strawberry Problem—persistent failure on simple character-counting tasks—
+            is one empirical symptom of this structural gap between syntactic fluency and genuine comprehension.
+          </p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-marker"></div>
+          <div class="finding-number">Finding 03</div>
+          <h3 class="finding-title">A framework for <em>tractable</em> imagination</h3>
+          <p class="finding-body">
+            Rather than treating imagination as binary, the project produced a working framework of
+            decomposable properties. This makes it possible to reason clearly about which dimensions
+            current models approximate and which remain deeply tied to embodied human cognition—
+            and therefore which are worth building toward.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER STRIP -->
+  <footer class="footer-strip">
+    <span class="footer-tag">Philosophy of Mind · Cognitive Science · Applied AI</span>
+    <span class="footer-status">
+      <span class="status-dot"></span>
+      Ongoing research direction
+    </span>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
