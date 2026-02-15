@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax-Advantaged Vehicles — Grant Gutzwiller</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f2ec;
+      --ink: #1a1714;
+      --ink-muted: #6b6560;
+      --ink-faint: #b5b0aa;
+      --accent: #c94a2b;
+      --accent-light: #e8c4ba;
+      --rule: #d4cfc9;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--serif);
+      min-height: 100vh;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── MASTHEAD ── */
+    .masthead {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding: 4rem 5rem 2rem;
+      border-bottom: 2px solid var(--ink);
+      gap: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards;
+    }
+
+    .masthead-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 1rem;
+    }
+
+    .masthead-title {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .masthead-meta {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--ink-muted);
+      line-height: 2;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── ARTICLE LAYOUT ── */
+    .article-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 4rem 5rem 6rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s ease forwards;
+    }
+
+    .article-section {
+      margin-bottom: 3rem;
+    }
+
+    .article-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .article-text {
+      font-size: 1.15rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+    }
+
+    .article-text:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ── ACKNOWLEDGMENTS ── */
+    .acknowledgments {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .acknowledgments-text {
+      font-size: 0.95rem;
+      font-style: italic;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 5rem;
+      border-top: 2px solid var(--ink);
+      background: var(--bg);
+      margin-top: auto;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s ease forwards;
+    }
+
+    .footer-left, .footer-right {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .footer a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer a:hover {
+      color: var(--accent);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .masthead {
+        grid-template-columns: 1fr;
+        padding: 3rem 2rem 1.5rem;
+      }
+
+      .masthead-meta {
+        text-align: left;
+        margin-top: 1rem;
+      }
+
+      .article-container {
+        padding: 3rem 2rem 5rem;
+      }
+
+      .footer {
+        padding: 1.5rem 2rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .masthead {
+        padding: 2.5rem 1.5rem 1.25rem;
+      }
+
+      .article-container {
+        padding: 2.5rem 1.5rem 4rem;
+      }
+
+      .article-text {
+        font-size: 1.05rem;
+      }
+
+      .footer {
+        padding: 1.5rem 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="index.html" class="logo">Grant Gutzwiller</a>
+    <div class="nav-links">
+      <a href="essays.html">Essays</a>
+      <a href="projects.html" class="active">Projects</a>
+      <a href="bookshelf.html">Bookshelf</a>
+      <a href="gallery.html">Gallery</a>
+    </div>
+  </nav>
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div>
+      <div class="masthead-label">Research Project · Economics</div>
+      <h1 class="masthead-title">Tax-Advantaged Vehicles & Charitable Giving</h1>
+    </div>
+    <div class="masthead-meta">
+      2024 – 2025<br>
+      Charitable Strategy
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <article class="article-container">
+    <section class="article-section">
+      <span class="section-label">Context</span>
+      <p class="article-text">
+        This research, conducted alongside a close collaborator, examined the charitable giving landscape with particular focus on the structural mechanics and strategic applications of tax-advantaged vehicles.
+      </p>
+    </section>
+
+    <section class="article-section">
+      <span class="section-label">Charitable Remainder Trusts</span>
+      <p class="article-text">
+        The work began with an in-depth analysis of Charitable Remainder Trusts (CRTs and CRUTs), modeling the effects of various market conditions, payout structures, and legal frameworks. This foundation revealed how different trust configurations respond to changing economic environments and donor objectives.
+      </p>
+    </section>
+
+    <section class="article-section">
+      <span class="section-label">Donor-Advised Funds & Alternative Assets</span>
+      <p class="article-text">
+        The CRT analysis informed a broader thesis: Donor-Advised Funds could serve as vehicles for alternative asset class investments, creating a mechanism to simultaneously drive economic growth and amplify charitable impact. This represented a departure from traditional DAF deployment strategies focused on publicly traded securities.
+      </p>
+    </section>
+
+    <section class="article-section">
+      <span class="section-label">Venture Investment Thesis</span>
+      <p class="article-text">
+        Further investigation uncovered legal flexibility within DAF structures that makes them particularly suited for venture investments in early-stage companies. The research identified specific provisions that, when combined with governance frameworks inspired by Beneficial Purpose Corporations, create a viable pathway for charitable capital to enter venture markets.
+      </p>
+      <p class="article-text">
+        At the time of this research, no organizations were actively operating in this space. Since then, several entities have emerged pursuing similar models—a development that validates the core thesis and suggests growing recognition of this opportunity.
+      </p>
+    </section>
+
+    <section class="article-section acknowledgments">
+      <p class="acknowledgments-text">
+        My gratitude extends to collaborators at Schwab Charitable, Berkeley Law, and The Smithsonian who provided invaluable expertise and perspective throughout this research.
+      </p>
+    </section>
+  </article>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span class="footer-left">&copy; Grant Gutzwiller</span>
+    <span class="footer-right"><a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer" class="footer-linkedin">IN</a> · Claremont, CA</span>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

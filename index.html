@@ -13,143 +13,106 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="home.css">
 </head>
-<body class="loaded">
+<body class="homepage no-scroll loaded">
     <!-- Navigation -->
     <nav class="navbar">
-        <a href="/" class="logo">Grant Gutzwiller</a>
+        <a href="index.html" class="logo">Grant Gutzwiller</a>
         <div class="nav-links">
-            <a href="/essays">Essays</a>
-            <a href="/projects" data-feature="projects">Projects</a>
-            <a href="/bookshelf">Bookshelf</a>
-            <a href="/gallery">Gallery</a>
-            <a href="/task_atlas">Task Atlas</a>
-            <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="essays.html">Essays</a>
+            <a href="projects.html" data-feature="projects">Projects</a>
+            <a href="bookshelf.html">Bookshelf</a>
+            <a href="gallery.html">Gallery</a>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero anim-1">
-        <div class="hero-content">
-            <div class="hero-label">Philosophy & Economics</div>
-            <h1 class="hero-title">Grant<br><em>Gutzwiller</em></h1>
-            <p class="hero-bio">
-                I study Philosophy and Economics at <a href="https://www.cmc.edu/" target="_blank" rel="noopener noreferrer">Claremont McKenna College</a>, where I run <a href="https://www.graphitegroup.co/" target="_blank" rel="noopener noreferrer">Graphite Group</a>, host a cheese club, and founded a <a href="https://scholarsoffinance.org/" target="_blank" rel="noopener noreferrer">SOF Chapter</a>. I've researched imagination and AI under philosopher <a href="https://www.amykind.com/" target="_blank" rel="noopener noreferrer">Amy Kind</a>.
+    <!-- Main Content -->
+    <main class="homepage-content">
+        <div class="content-left">
+            <p class="intro-text">
+                I study Philosophy and Economics at <a href="https://www.cmc.edu/" target="_blank" rel="noopener noreferrer">Claremont McKenna College</a>, where I run <a href="https://www.graphitegroup.co/" target="_blank" rel="noopener noreferrer">Graphite Group</a>, host a cheese club, and founded a <a href="https://scholarsoffinance.org/" target="_blank" rel="noopener noreferrer">SOF Chapter</a>. I've researched imagination and AI under philosopher <a href="https://www.amykind.com/" target="_blank" rel="noopener noreferrer">Amy Kind</a> and am involved in various fellowships.
             </p>
-            <div class="hero-ctas">
-                <a href="/essays" class="btn btn-primary">Read Essays</a>
-                <a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">View Work History</a>
-            </div>
-        </div>
-        <nav class="hero-nav">
-            <ul class="index-list">
-                <li>
-                    <a href="/essays" class="index-list-item">
-                        <span class="index-number">01</span>
-                        <span class="index-label">Essays</span>
-                        <span class="index-arrow">→</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/projects" class="index-list-item" data-feature="projects">
-                        <span class="index-number">02</span>
-                        <span class="index-label">Projects</span>
-                        <span class="index-arrow">→</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/bookshelf" class="index-list-item">
-                        <span class="index-number">03</span>
-                        <span class="index-label">Bookshelf</span>
-                        <span class="index-arrow">→</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/task_atlas" class="index-list-item">
-                        <span class="index-number">04</span>
-                        <span class="index-label">Task Atlas</span>
-                        <span class="index-arrow">→</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </section>
 
-    <!-- Feature Strip -->
-    <section class="feature-strip anim-2">
-        <div class="feature-card">
-            <div class="feature-tag">Research</div>
-            <h3 class="feature-title">Philosophy of <em>Imagination</em></h3>
-            <p class="feature-desc">Investigating whether AI systems can exhibit genuine imagination, or if they're limited to sophisticated pattern completion.</p>
-            <a href="/philosophy-of-imagination" class="feature-link">Read More →</a>
-        </div>
-        <div class="feature-card">
-            <div class="feature-tag">Economics</div>
-            <h3 class="feature-title">Economic <em>Equilibrium</em></h3>
-            <p class="feature-desc">Analyzing the world through general equilibrium theory with an eye for uncovering overlooked assumptions in markets.</p>
-            <a href="/essays" class="feature-link">Explore Essays →</a>
-        </div>
-        <div class="feature-card">
-            <div class="feature-tag">Data</div>
-            <h3 class="feature-title">Task <em>Atlas</em></h3>
-            <p class="feature-desc">Interactive visualization of over 30,000 work activities, exploring how tasks cluster and what that means for automation.</p>
-            <a href="/task_atlas" class="feature-link">View Dashboard →</a>
-        </div>
-    </section>
+            <!-- Writings -->
+            <section class="text-section">
+                <h2 class="section-heading"><a href="essays.html">Writings</a></h2>
+                <p class="section-text">My writing explores the intersection of AI, economic forces, and philosophy. I aim to analyze the world through the lens of general equilibrium with an eye for uncovering overlooked assumptions.</p>
+            </section>
 
-    <!-- Currently Section -->
-    <section class="currently-section anim-3">
-        <div class="currently-label">
-            <span class="vertical-text">Currently</span>
-        </div>
-        <div class="currently-grid">
-            <div class="currently-item">
-                <div class="currently-role">Student</div>
-                <h4 class="currently-title">Philosophy & Economics</h4>
-                <div class="currently-org">Claremont McKenna College</div>
-            </div>
-            <div class="currently-item">
-                <div class="currently-role">President</div>
-                <h4 class="currently-title">Graphite Group</h4>
-                <div class="currently-org">Student Investment Fund</div>
-            </div>
-            <div class="currently-item">
-                <div class="currently-role">Researcher</div>
-                <h4 class="currently-title">AI & Imagination</h4>
-                <div class="currently-org">Philosophy Department</div>
-            </div>
-        </div>
-    </section>
+            <!-- Work -->
+            <section class="text-section">
+                <h2 class="section-heading"><a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer">Work</a></h2>
+                <p class="section-text">I have experience primarily in consulting, finance, and startup environments. I am working to build a career that allows me to blend advancing technology and business strategy with value driven practices.</p>
+            </section>
 
-    <!-- Recent Writing -->
-    <section class="recent-writing anim-4">
-        <div class="writing-header">
-            <h2 class="section-title">Recent Writing</h2>
-            <a href="/essays" class="section-link">All Essays →</a>
+            <!-- Projects -->
+            <section class="text-section">
+                <h2 class="section-heading"><a href="projects.html">Projects</a></h2>
+                <p class="section-text">My personal projects are varied and ad hoc, ranging from translating natural language to syntactic logic into company sourcing mechanisms. I also work with OpenAI's GPT lab, where I contribute to product testing and development.</p>
+            </section>
         </div>
-        <div class="writing-grid">
-            <article class="writing-item">
-                <div class="writing-meta">
-                    <span class="writing-category">Philosophy</span>
-                    <span class="writing-date">2024</span>
-                </div>
-                <h3 class="writing-title">Mechanical Outputs or Imaginative Acts</h3>
-                <p class="writing-excerpt">Can AI systems exhibit genuine imagination, or are they limited to sophisticated pattern completion? An investigation into machine consciousness.</p>
-            </article>
-            <article class="writing-item">
-                <div class="writing-meta">
-                    <span class="writing-category">Economics</span>
-                    <span class="writing-date">2024</span>
-                </div>
-                <h3 class="writing-title">What Companies Won't Automate</h3>
-                <p class="writing-excerpt">Not all automatable work will be automated. Understanding the economic forces that determine which tasks remain human.</p>
-            </article>
+
+        <div class="content-right">
+            <!-- Featured Essays -->
+            <section class="featured-section">
+                <h3 class="featured-heading">Essays</h3>
+                <ul class="featured-list">
+                    <li>
+                        <a href="philosophy-of-imagination.html" class="featured-item">
+                            <span class="featured-number">01</span>
+                            <div class="featured-content">
+                                <span class="featured-title">Mechanical Outputs or Imaginative Acts</span>
+                                <span class="featured-desc">Can AI systems exhibit genuine imagination?</span>
+                            </div>
+                            <span class="featured-arrow">→</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="what-companies-wont-automate.html" class="featured-item">
+                            <span class="featured-number">02</span>
+                            <div class="featured-content">
+                                <span class="featured-title">What Companies Won't Automate</span>
+                                <span class="featured-desc">Where AI value actually accrues</span>
+                            </div>
+                            <span class="featured-arrow">→</span>
+                        </a>
+                    </li>
+                </ul>
+                <a href="essays.html" class="featured-link">All Essays →</a>
+            </section>
+
+            <!-- Featured Projects -->
+            <section class="featured-section">
+                <h3 class="featured-heading">Projects</h3>
+                <ul class="featured-list">
+                    <li>
+                        <a href="task_atlas.html" class="featured-item">
+                            <span class="featured-number">01</span>
+                            <div class="featured-content">
+                                <span class="featured-title">Task Atlas</span>
+                                <span class="featured-desc">30k+ work activities mapped by value</span>
+                            </div>
+                            <span class="featured-arrow">→</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="tax-advantaged-vehicles.html" class="featured-item">
+                            <span class="featured-number">02</span>
+                            <div class="featured-content">
+                                <span class="featured-title">Tax-Advantaged Vehicles</span>
+                                <span class="featured-desc">CRTs, DAFs, and venture philanthropy</span>
+                            </div>
+                            <span class="featured-arrow">→</span>
+                        </a>
+                    </li>
+                </ul>
+            </section>
         </div>
-    </section>
+    </main>
 
     <!-- Footer -->
-    <footer class="footer anim-5">
+    <footer class="footer homepage-footer">
         <span class="footer-left">&copy; Grant Gutzwiller</span>
-        <span class="footer-right">Claremont, CA · <span id="current-time"></span></span>
+        <span class="footer-right"><a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer" class="footer-linkedin">IN</a> · Claremont, CA · <span id="current-time"></span></span>
     </footer>
 
     <script src="site-config.js"></script>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory & Amygdala Stimulation — Grant Gutzwiller</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f2ec;
+      --ink: #1a1714;
+      --ink-muted: #6b6560;
+      --ink-faint: #b5b0aa;
+      --accent: #c94a2b;
+      --accent-light: #e8c4ba;
+      --rule: #d4cfc9;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--serif);
+      min-height: 100vh;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── MASTHEAD ── */
+    .masthead {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding: 4rem 5rem 2rem;
+      border-bottom: 2px solid var(--ink);
+      gap: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards;
+    }
+
+    .masthead-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 1rem;
+    }
+
+    .masthead-title {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .masthead-meta {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--ink-muted);
+      line-height: 2;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── ARTICLE LAYOUT ── */
+    .article-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 4rem 5rem 6rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s ease forwards;
+    }
+
+    .article-section {
+      margin-bottom: 3rem;
+    }
+
+    .article-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .article-text {
+      font-size: 1.15rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+    }
+
+    .article-text:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 5rem;
+      border-top: 2px solid var(--ink);
+      background: var(--bg);
+      margin-top: auto;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s ease forwards;
+    }
+
+    .footer-left, .footer-right {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .footer a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer a:hover {
+      color: var(--accent);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .masthead {
+        grid-template-columns: 1fr;
+        padding: 3rem 2rem 1.5rem;
+      }
+
+      .masthead-meta {
+        text-align: left;
+        margin-top: 1rem;
+      }
+
+      .article-container {
+        padding: 3rem 2rem 5rem;
+      }
+
+      .footer {
+        padding: 1.5rem 2rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .masthead {
+        padding: 2.5rem 1.5rem 1.25rem;
+      }
+
+      .article-container {
+        padding: 2.5rem 1.5rem 4rem;
+      }
+
+      .article-text {
+        font-size: 1.05rem;
+      }
+
+      .footer {
+        padding: 1.5rem 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="index.html" class="logo">Grant Gutzwiller</a>
+    <div class="nav-links">
+      <a href="essays.html">Essays</a>
+      <a href="projects.html" class="active">Projects</a>
+      <a href="bookshelf.html">Bookshelf</a>
+      <a href="gallery.html">Gallery</a>
+    </div>
+  </nav>
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div>
+      <div class="masthead-label">Research Project · Neuroscience</div>
+      <h1 class="masthead-title">Memory & Amygdala Stimulation</h1>
+    </div>
+    <div class="masthead-meta">
+      2022<br>
+      The INMAN Lab
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <article class="article-container">
+    <section class="article-section">
+      <span class="section-label">Context</span>
+      <p class="article-text">
+        This work emerged from a broader interest in human action, memory, and cognition—specifically, the mechanisms that shape how people form beliefs, make decisions, and respond to environmental cues. Questions about behavioral nudges, psychological framing, and the neural substrates of choice have always felt more tractable than purely philosophical treatments of agency.
+      </p>
+    </section>
+
+    <section class="article-section">
+      <span class="section-label">Research Focus</span>
+      <p class="article-text">
+        At the INMAN Lab, I contributed to human trials examining how amygdala stimulation affects memory consolidation and retrieval. The amygdala's role in emotional salience makes it central to understanding why certain experiences become deeply encoded while others fade. This work sits at the intersection of neuroscience and psychology—using controlled interventions to map the causal structure of memory formation.
+      </p>
+      <p class="article-text">
+        My role involved supporting both participant testing protocols and data analysis. I completed required coursework for human subject research and shadowed senior team members to understand lab operations, experimental design considerations, and the practical constraints that separate clean theory from implementable empirical work.
+      </p>
+    </section>
+
+    <section class="article-section">
+      <span class="section-label">Broader Research Interests</span>
+      <p class="article-text">
+        The project fit within a larger set of questions about human psychology and behavior change. How do subtle interventions—contextual cues, framing effects, choice architecture—alter decision-making without restricting options? What does neuroscience reveal about the gap between stated preferences and actual behavior? These questions connect directly to fields like behavioral economics, public policy design, and applied cognitive science.
+      </p>
+      <p class="article-text">
+        Understanding the neurological basis of memory and emotional processing provides a foundation for thinking clearly about interventions that aim to change behavior—whether through nudges, incentive design, or information presentation. The work reinforced that effective behavioral interventions require both conceptual clarity about psychological mechanisms and empirical validation through controlled testing.
+      </p>
+    </section>
+  </article>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span class="footer-left">&copy; Grant Gutzwiller</span>
+    <span class="footer-right"><a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer" class="footer-linkedin">IN</a> · Claremont, CA</span>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

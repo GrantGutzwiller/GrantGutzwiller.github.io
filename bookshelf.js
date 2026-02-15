@@ -1,26 +1,40 @@
 // Book covers from the Bookshelf folder
 const books = [
     'Bookshelf/0az76CWMscq9Sceop9ersmPRM.avif',
+    'Bookshelf/the-analects-9.jpg',
+    'Bookshelf/71-WJgHWC1L._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/5amIvhpTBLZKIdvl1rt6V8jmBk.jpg',
     'Bookshelf/7cB94cluz69cLE2Sesp5nnWA.avif',
+    'Bookshelf/51buLebyiJL._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/ATfWZWZg0qYlCAyfBU9KRTqqE.jpg',
     'Bookshelf/BtKNKQ9JjzXJ7Zg3dE4Nn0hVixw.avif',
+    'Bookshelf/9780679724650_p0_v2_s600x595.jpg',
     'Bookshelf/DsIfpMJbvONdBoUzCgS6x4zegk.avif',
     'Bookshelf/N96debEB9dwzTOCH5tZ7tWTu4.jpg',
+    'Bookshelf/9781667211640_p0_v3_s1200x630.jpg',
+    'Bookshelf/71sSYXkyTXL._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/NnxkAdmeZivBlWyq0iwmGz2lqc.jpg',
     'Bookshelf/R7bdHGgyCGVvEgUZKWUMNLo3Cvs.jpg',
+    'Bookshelf/81DFDGzHZqL._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/RCMizTI58k3tmM0khkvTqINx7nw.avif',
     'Bookshelf/SB1NP3E8MAN4qgDqPbLzwZkw.avif',
+    'Bookshelf/61-M36Jrb0L._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/YlWDT0vFEPnurHsYCN0oBOVE5E.avif',
     'Bookshelf/daq3FLvNZpiir3PdZuy9g3A0p1w.jpg',
+    'Bookshelf/716E6dQ4BXL._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/fsDio4MpgthB7u7dQZI4itgI6E.avif',
     'Bookshelf/fsbCzFCmfj4ZVThSASu4WsWlk.avif',
+    'Bookshelf/818l7Ujz5-L._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/hpKFuMWaDHgZbEYf11Gv5XoPs.jpg',
     'Bookshelf/iedClvlVgSMtTYBBY3EdyuAaU.avif',
+    'Bookshelf/716NJX7AE5L._AC_UF1000,1000_QL80_.jpg',
     'Bookshelf/oOLZvex7ETLQSMC7kuJALBW1NLM.avif',
+    'Bookshelf/Fish.jpg',
     'Bookshelf/syi5PJWdB5hK4tz1GCkyLDhLc.avif',
     'Bookshelf/vgxu1cH88RLvl0BZUIia6GltiI4.avif',
-    'Bookshelf/x7NVUVd0AJYdWq4uijTqVxP0ig.jpg'
+    'Bookshelf/81Tf+u65RvL._AC_UF1000,1000_QL80_.jpg',
+    'Bookshelf/x7NVUVd0AJYdWq4uijTqVxP0ig.jpg',
+    'Bookshelf/Thus Spoke.jpg'
 ];
 
 // Load bookshelf
