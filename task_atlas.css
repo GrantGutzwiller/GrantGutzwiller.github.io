@@ -125,6 +125,12 @@ body.task-tam {
   top: 0.6rem;
   z-index: 20;
   backdrop-filter: blur(4px);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.atlas-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .atlas-tab {
@@ -243,6 +249,13 @@ body.task-tam {
   color: var(--atlas-text);
   font-size: 0.92rem;
   outline: none;
+}
+
+/* Prevent iOS auto-zoom on focus while allowing manual zoom */
+@media screen and (max-width: 600px) {
+  .atlas-search {
+    font-size: 16px;
+  }
 }
 
 .atlas-search:focus {
@@ -642,7 +655,141 @@ body.task-tam {
     font-size: 1.8rem;
   }
 
+  .atlas-subtitle {
+    font-size: 0.9rem;
+  }
+
   .atlas-card {
     padding: 0.9rem;
+  }
+
+  .atlas-tabs {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .atlas-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .atlas-tab {
+    font-size: 0.8rem;
+    padding: 0.48rem 0.85rem;
+  }
+
+  .atlas-table {
+    min-width: 600px;
+    font-size: 0.8rem;
+  }
+
+  .atlas-table th {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.62rem;
+  }
+
+  .atlas-table td {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .atlas-table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .atlas-modal {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .atlas-modal-head {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .atlas-modal-head h3 {
+    font-size: 0.9rem;
+  }
+
+  .atlas-modal-body {
+    padding: 0.9rem;
+  }
+
+  .atlas-mini-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .atlas-search {
+    font-size: 0.88rem;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .atlas-pill {
+    font-size: 0.72rem;
+    padding: 0.32rem 0.65rem;
+  }
+}
+
+/* ── IPHONE SPECIFIC OPTIMIZATIONS ── */
+@media (max-width: 430px) {
+  .atlas-hero {
+    padding: 2rem 1rem 1.4rem;
+  }
+
+  .atlas-wrap {
+    padding: 0.9rem;
+  }
+
+  .atlas-title {
+    font-size: 1.6rem;
+  }
+
+  .atlas-subtitle {
+    font-size: 0.88rem;
+  }
+
+  .atlas-kicker {
+    font-size: 0.65rem;
+  }
+
+  .atlas-stat-value {
+    font-size: 1.15rem;
+  }
+
+  .atlas-stat-label {
+    font-size: 0.7rem;
+  }
+
+  .atlas-tab {
+    font-size: 0.78rem;
+    padding: 0.45rem 0.8rem;
+    min-height: 44px; /* iOS minimum touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .atlas-pill {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .atlas-card h2 {
+    font-size: 0.85rem;
+  }
+
+  .atlas-card p {
+    font-size: 0.88rem;
+  }
+
+  .atlas-table {
+    min-width: 550px;
+  }
+
+  .atlas-pager button {
+    min-height: 36px;
+    padding: 0.35rem 0.75rem;
   }
 }
