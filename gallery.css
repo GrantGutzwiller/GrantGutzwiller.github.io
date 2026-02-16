@@ -165,3 +165,39 @@
     padding: 0 1rem;
   }
 }
+
+/* ── IPHONE OPTIMIZATIONS ── */
+@media (max-width: 430px) {
+  .gallery-main {
+    padding: 2rem 1rem;
+  }
+
+  .gallery-item {
+    margin-bottom: 0.85rem;
+  }
+
+  .lightbox {
+    padding: 1rem;
+  }
+
+  .lightbox img {
+    max-width: 95%;
+    max-height: 80vh;
+  }
+
+  .close-lightbox {
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 2.2rem;
+  }
+
+  .prev-btn,
+  .next-btn {
+    font-size: 1.75rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .lightbox-controls {
+    padding: 0 0.5rem;
+  }
+}

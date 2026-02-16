@@ -278,3 +278,45 @@ body.homepage.no-scroll .footer {
     bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* ── IPHONE OPTIMIZATIONS ── */
+@media (max-width: 430px) {
+  .homepage-content {
+    padding: 2rem 1rem 0;
+    gap: 2rem;
+  }
+
+  .intro-text,
+  .section-text {
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .section-heading {
+    font-size: 1rem;
+  }
+
+  .text-section {
+    margin-bottom: 1.75rem;
+  }
+
+  .content-right {
+    padding-top: 2rem;
+  }
+
+  .featured-section {
+    margin-bottom: 2rem;
+  }
+
+  .featured-item h3 {
+    font-size: 0.95rem;
+  }
+
+  .featured-item p {
+    font-size: 0.85rem;
+  }
+
+  .homepage-footer {
+    bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
+  }
+}

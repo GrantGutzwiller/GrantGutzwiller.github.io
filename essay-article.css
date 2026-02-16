@@ -292,3 +292,64 @@ body.essay-ai-value .essay-body h2 {
         padding: 1rem 1.25rem;
     }
 }
+
+/* ── IPHONE OPTIMIZATIONS ── */
+@media (max-width: 430px) {
+    .back-link {
+        padding: 0.9rem 1rem 0;
+        font-size: 0.75rem;
+    }
+
+    .essay-article {
+        padding: 1rem 1rem 1.75rem;
+    }
+
+    body.essay-ai-value .essay-article {
+        padding-top: 1rem;
+    }
+
+    body.essay-ai-value .essay-header {
+        margin-top: 12vh;
+        margin-bottom: 1.5rem;
+    }
+
+    .essay-page-title {
+        font-size: 1.4rem;
+        line-height: 1.25;
+    }
+
+    .essay-page-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .essay-page-date {
+        font-size: 0.75rem;
+    }
+
+    .essay-body p {
+        font-size: 0.85rem;
+        line-height: 1.65;
+    }
+
+    .essay-body h2 {
+        font-size: 1.1rem;
+        margin-top: 1.75rem;
+    }
+
+    .essay-body pre {
+        padding: 0.9rem;
+        font-size: 0.7rem;
+    }
+
+    .essay-body code {
+        font-size: 0.72rem;
+    }
+
+    .essay-body p code {
+        font-size: 0.82rem;
+    }
+
+    .essay-footer {
+        padding: 0.9rem 1rem;
+    }
+}

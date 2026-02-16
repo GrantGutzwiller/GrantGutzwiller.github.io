@@ -156,3 +156,29 @@
     font-size: 0.85rem;
   }
 }
+
+/* ── IPHONE OPTIMIZATIONS ── */
+@media (max-width: 430px) {
+  .essays-main {
+    padding: 2rem 1rem;
+  }
+
+  .essay-row {
+    padding: 1rem 0.5rem;
+  }
+
+  .essay-title {
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .essay-summary {
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .essay-date,
+  .essay-category {
+    font-size: 0.56rem;
+  }
+}
