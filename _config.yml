@@ -1,0 +1,30 @@
+# Jekyll configuration for GitHub Pages
+# Enables clean URLs without .html extensions
+
+# Set the permalink style to pretty (removes .html from URLs)
+permalink: pretty
+
+# Include files that start with underscores (except _site)
+include:
+  - _pages
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - "*.bak"
+
+# Enable plugins (GitHub Pages supports these by default)
+plugins:
+  - jekyll-relative-links
+
+# Allow extensionless URLs
+relative_links:
+  enabled: true
+  collections: false
+
+# Default layout (optional - only if you want to use layouts)
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: none
