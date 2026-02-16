@@ -1,0 +1,12 @@
+/* TEAM */
+
+Creator: Grant Gutzwiller
+Site: https://grantgutzwiller.com
+LinkedIn: https://www.linkedin.com/in/grant-gutzwiller/
+Location: Claremont, California
+
+/* SITE */
+
+Standards: HTML5, CSS3
+Components: Vanilla JavaScript
+Software: VS Code, Claude Code
