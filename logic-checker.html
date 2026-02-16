@@ -69,6 +69,20 @@
       letter-spacing: 0.06em;
     }
 
+    .masthead-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
     /* ── GRID LAYOUT ── */
     .project-grid {
       display: grid;
@@ -214,6 +228,15 @@
       }
     }
 
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.3;
+      }
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
       .masthead {
@@ -270,6 +293,21 @@
         align-items: flex-start;
       }
     }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: opacity 0.2s ease;
+    }
+
+    .back-link:hover {
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
@@ -287,12 +325,13 @@
   <!-- Masthead -->
   <header class="masthead">
     <div>
+      <a href="projects.html" class="back-link">&larr; back to projects</a>
       <div class="masthead-label">Technical Project · Logic & AI</div>
       <h1 class="masthead-title">Natural Language Logic Checker</h1>
     </div>
     <div class="masthead-meta">
-      2026<br>
-      Ongoing Development
+      <div>2026</div>
+      <div class="masthead-status"><span class="status-dot"></span>Ongoing Development</div>
     </div>
   </header>
 
@@ -303,22 +342,13 @@
       <div class="col-intro">
         <div class="body-copy">
           <p>
-            Most arguments in natural language are evaluated holistically—people judge whether they find the conclusion persuasive without systematically separating logical structure from factual content. This creates persistent confusion between three distinct dimensions: whether an argument is formally valid, whether its premises provide strong inductive support, and whether those premises are actually true.
+            Arguments are typically evaluated by how persuasive they appear on the surface. This makes intuitive sense as it is easier to create a holistic judgement rather than separating logical structure from factual content. But surface level evaluation blends together three distinct things: whether an argument is formally valid, whether its premises provide strong inductive support, and whether those premises are actually true. Standard evaluation rarely gives a definitive answer on any one of them.
           </p>
           <p>
-            The goal of this project is to build a system that enforces these distinctions programmatically. It takes natural language arguments, encodes them into structured logical representations, and evaluates validity, strength, and truth separately. This makes explicit what informal reasoning leaves implicit: where an argument succeeds or fails, and why.
+            The goal of this project is to build a system that takes natural language arguments and detects these three aspects programmatically. The program first classifies each argument as deductive, inductive, or mixed based on its inferential structure. It then reduces the argument to its smallest atomic steps, highlights any hidden assumptions and mapping the general flow of logic. Each step can then be stress tested through adversarial debate, revealing weaknesses that single pass evaluation tends to miss.
           </p>
           <p>
-            The system operates through a multi-stage pipeline. First, it classifies arguments as deductive, inductive, or mixed based on their inferential structure. Deductive arguments claim necessity—if premises are true, the conclusion must follow. Inductive arguments claim probability—premises make the conclusion more or less likely.
-          </p>
-          <p>
-            Second, the system decomposes arguments into the smallest atomic steps. Each premise, inference, and hidden assumption becomes a discrete node that can be independently evaluated. This surfaces unstated premises that arguments rely on but never articulate, and allows the system to pinpoint exactly where reasoning breaks down.
-          </p>
-          <p>
-            Beyond static evaluation, the system stress-tests each step through adversarial debate. For every claim and inference, one LLM instance defends the step while another attacks it—raising counterexamples, identifying missing premises, or challenging factual assumptions. This simulated dialectic reveals weaknesses that single-pass evaluation misses.
-          </p>
-          <p>
-            This project sits at the intersection of formal logic, informal argumentation theory, and applied AI. It operationalizes philosophical distinctions that matter in practice: the difference between a valid but unsound argument versus a strong but uncogent one, or between attacking a premise and attacking an inference. By automating this enforcement, the system makes rigorous argument analysis accessible without requiring formal training.
+            I'm continuing to develop this with a longer term goal: decomposing multiple arguments within a field, synthesizing them into their strongest and most common form, and systematically testing for counterexamples and edge cases. My hope is that this will improve argument formation and potentially enable counterexample based investment research.
           </p>
         </div>
       </div>

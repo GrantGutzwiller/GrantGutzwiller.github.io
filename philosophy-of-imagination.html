@@ -330,6 +330,21 @@
       50%       { opacity: 0.3; }
     }
 
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: opacity 0.2s ease;
+    }
+
+    .back-link:hover {
+      opacity: 0.5;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
       .masthead,
@@ -357,6 +372,7 @@
   <!-- MASTHEAD -->
   <header class="masthead">
     <div>
+      <a href="essays.html" class="back-link">&larr; back to essays</a>
       <div class="masthead-label">Research · Philosophy of Mind &amp; AI</div>
       <h1 class="masthead-title">Mechanical Outputs<br>or <em>Imaginative Acts</em></h1>
     </div>

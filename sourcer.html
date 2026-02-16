@@ -270,6 +270,21 @@
         align-items: flex-start;
       }
     }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: opacity 0.2s ease;
+    }
+
+    .back-link:hover {
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
@@ -287,6 +302,7 @@
   <!-- Masthead -->
   <header class="masthead">
     <div>
+      <a href="projects.html" class="back-link">&larr; back to projects</a>
       <div class="masthead-label">Product Development · M&A Technology</div>
       <h1 class="masthead-title">Adaptive Market Discovery System</h1>
     </div>
@@ -303,19 +319,13 @@
       <div class="col-intro">
         <div class="body-copy">
           <p>
-            In M&A advisory work, identifying potential buyers for a client's business requires systematically searching fragmented market data with often vague or incomplete targeting criteria. A typical brief might specify broad industry categories, geographic preferences, and rough financial parameters—leaving analysts to manually construct search queries, filter results, and score hundreds of potential acquirers against unstated assumptions about strategic fit.
+            Generally, when face with a new market or looking to identify potential buyers for a business, companies start with a brief that outlines the broad industry categories, geographic preferences, and rough financial parameters that either make up the market that they want to understand or encapsulate a potential acquirers area. But acting on these briefs require leaving analysts to manually construct search queries, filter results, and score hundreds of potential acquirers against unstated assumptions about strategic fit. This makes the process highly inconsistent and simultanously time intensive with different interpreations and coverage of data.
           </p>
           <p>
-            This process is time-intensive and inconsistent. Different analysts interpret the same brief differently, coverage varies based on which databases someone happens to check, and implicit criteria remain invisible until late in the process when deals fail on misaligned expectations. The core inefficiency: translating ambiguous intent into comprehensive, defensible company lists requires both domain expertise and mechanical search work that doesn't scale.
+            I built an automated sourcing pipeline that transforms natural language deal briefs into structured, scored company databases. To do so, the program parses briefs to identify criterion and then uses an LLM guided exploration to systematically search the market space using MECE principles. After using semantic search APIs to discover companies they are then scored against the derived criteria with a per company rationale.
           </p>
           <p>
-            I built an automated sourcing pipeline that transforms natural language deal briefs into structured, scored company databases. The system parses briefs to extract explicit criteria, then uses LLM-guided exploration to generate search strategies that cover the market space systematically. It constructs a hierarchical framework of market segments using MECE principles—mutually exclusive, collectively exhaustive categories that ensure no potential buyer falls through structural gaps in coverage.
-          </p>
-          <p>
-            The pipeline integrates semantic search APIs to discover companies matching generated queries, then filters results through quantitative screens before scoring each candidate against criteria derived from the original brief. Scoring is multi-dimensional: strategic fit, financial capacity, geographic alignment, and domain expertise all contribute to a final ranking with per-company rationale that makes evaluation transparent and auditable.
-          </p>
-          <p>
-            Beyond immediate time savings, the tool surfaced a more fundamental issue: most sourcing inefficiency stems from ambiguous briefs, not search execution. Forcing criteria to be explicit and testable—through automated scoring rubrics and systematic market segmentation—revealed gaps in deal strategy that manual processes obscured. The project demonstrated how automation tools can improve not just efficiency but decision quality by making implicit assumptions explicit and auditable.
+            This enables substantial time saving and reduces the ambiguity and variation that comes from human lead search. It has been utilized to source possible buyers on live deal teams guiding practice.
           </p>
         </div>
       </div>

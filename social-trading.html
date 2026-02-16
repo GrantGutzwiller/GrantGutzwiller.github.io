@@ -192,6 +192,21 @@
         align-items: flex-start;
       }
     }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: opacity 0.2s ease;
+    }
+
+    .back-link:hover {
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
@@ -209,6 +224,7 @@
   <!-- Masthead -->
   <header class="masthead">
     <div>
+      <a href="projects.html" class="back-link">&larr; back to projects</a>
       <div class="masthead-label">Product Development · FinTech</div>
       <h1 class="masthead-title">Social Stock Trading Platform</h1>
     </div>
@@ -223,20 +239,14 @@
     <section class="article-section">
       <span class="section-label">Problem Space</span>
       <p class="article-text">
-        The retail investing landscape was undergoing rapid transformation. Platforms like Robinhood had democratized market access, but the experience remained fundamentally solitary. There was no native infrastructure for investors to share research, discuss positions, or learn from peers within the trading environment itself. Discussion happened on fragmented platforms—Reddit forums, Discord servers, Twitter threads—disconnected from actual execution.
-      </p>
-      <p class="article-text">
-        The core insight: investing behavior is inherently social, but existing products treated it as an isolated activity. This created an opportunity to build a platform where the social layer and trading layer were integrated from the ground up, lowering barriers to market participation while maintaining rigorous compliance standards.
+        What initially prompted me into exploring this space was the realization that while various platforms had made market access much easier for retailer investors, discussions were happening primarily on fragmented platforms. However, it seemed like investing was becoming a much more social experiences following favorite traders (or politicians). This seemed to indicate an avaliblity for a platform specfically focused on this social trading aspect.
       </p>
     </section>
 
     <section class="article-section">
       <span class="section-label">Research & Validation</span>
       <p class="article-text">
-        I conducted structured interviews with over twenty active retail investors to validate assumptions about user behavior and feature priorities. The interviews revealed consistent patterns: users wanted transparency into what experienced traders were buying, clear explanations of investment theses, and mechanisms to evaluate track records before following strategies.
-      </p>
-      <p class="article-text">
-        This research informed product prioritization. The initial feature set focused on social proof mechanisms—verified portfolio performance, transparent trade history, and discussion threads tied to specific securities. These features directly addressed the gap between where users sought information and where they executed trades.
+        I interviewed over twenty active retail and professional investors to better understand user behavior and feature priorities for a platform. And then, from these interviews, I developed an initial feature group with a focus on verified portfolio performance, transparent trade history, and discussion threads tied to specific securities. These features focused on addressing the gap between where users sought information and where they executed trades.
       </p>
     </section>
 
@@ -253,10 +263,7 @@
     <section class="article-section">
       <span class="section-label">Product Design & Technical Specification</span>
       <p class="article-text">
-        I designed a complete wireframe system translating user requirements into technical specifications for development. The wireframes detailed user flows for account creation, portfolio linking, trade execution, social interactions, and compliance workflows. Each screen included annotations specifying API endpoints, data validation rules, and edge case handling.
-      </p>
-      <p class="article-text">
-        The design prioritized clarity over complexity. Rather than attempting feature parity with established platforms, the interface focused on core workflows that delivered immediate value: discovering high-performing investors, understanding their strategies, and replicating positions with transparent fee structures.
+        I designed a complete wireframe system to model out detailed user flows for account creation, portfolio linking, trade execution, social interactions, and compliance workflows. The core focus was on: discovering high-performing investors, understanding their strategies, and replicating positions with transparent fee structures. Development was done with engineering resources on Upwork.
       </p>
     </section>
 
