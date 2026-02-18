@@ -1,5 +1,9 @@
 (() => {
   const STORAGE_KEY = 'graphite-group-interview-timer-v1';
+  const DINO_START_SECONDS = 5 * 60 + 9.45;
+  const DINO_HIT_MS = 9450;
+  const DINO_END_MS = 10000;
+  const DINO_HIDE_AFTER_START_MS = 15000;
   const MODES = {
     caseWork: { label: 'Case Work', durationSeconds: 45 * 60 },
     presentation: { label: 'Presentation', durationSeconds: 10 * 60 }
@@ -11,7 +15,11 @@
     isRunning: false,
     endTimeMs: 0,
     intervalId: null,
-    audioContext: null
+    audioContext: null,
+    dinoEndTimeoutId: null,
+    dinoOverlayTimeoutId: null,
+    dinoHideTimeoutId: null,
+    dinoSequenceStarted: false
   };
 
   const elements = {
@@ -24,7 +32,9 @@
     resetButton: document.getElementById('resetButton'),
     minusMinuteButton: document.getElementById('minusMinuteButton'),
     plusMinuteButton: document.getElementById('plusMinuteButton'),
-    fullscreenButton: document.getElementById('fullscreenButton')
+    fullscreenButton: document.getElementById('fullscreenButton'),
+    dinoGifWrap: document.querySelector('.dino-gif-wrap'),
+    dinoGif: document.querySelector('.dino-gif')
   };
 
   function formatTime(totalSeconds) {
@@ -47,8 +57,16 @@
     state.remainingSeconds = Math.max(0, Math.ceil(deltaMs / 1000));
   }
 
+  function getRemainingSecondsPrecise() {
+    if (state.isRunning && state.endTimeMs > 0) {
+      return Math.max(0, (state.endTimeMs - Date.now()) / 1000);
+    }
+    return state.remainingSeconds;
+  }
+
   function isFinalFiveCaseWork() {
-    return state.isRunning && state.mode === 'caseWork' && state.remainingSeconds > 0 && state.remainingSeconds <= 5 * 60;
+    const remaining = getRemainingSecondsPrecise();
+    return state.isRunning && state.mode === 'caseWork' && remaining > 0 && remaining <= DINO_START_SECONDS;
   }
 
   function persistState() {
@@ -135,6 +153,75 @@
     elements.timerStatus.textContent = 'Paused.';
   }
 
+  function resetDinoScene() {
+    if (state.dinoEndTimeoutId !== null) {
+      window.clearTimeout(state.dinoEndTimeoutId);
+      state.dinoEndTimeoutId = null;
+    }
+    if (state.dinoOverlayTimeoutId !== null) {
+      window.clearTimeout(state.dinoOverlayTimeoutId);
+      state.dinoOverlayTimeoutId = null;
+    }
+    if (state.dinoHideTimeoutId !== null) {
+      window.clearTimeout(state.dinoHideTimeoutId);
+      state.dinoHideTimeoutId = null;
+    }
+    state.dinoSequenceStarted = false;
+
+    if (elements.dinoGifWrap) {
+      elements.dinoGifWrap.classList.remove('show-overlay');
+      elements.dinoGifWrap.classList.remove('dino-ended');
+      elements.dinoGifWrap.classList.remove('dino-hidden');
+    }
+  }
+
+  function startDinoSequence() {
+    if (!elements.dinoGifWrap || !elements.dinoGif || state.dinoSequenceStarted) {
+      return;
+    }
+
+    state.dinoSequenceStarted = true;
+    elements.dinoGifWrap.classList.remove('show-overlay');
+    elements.dinoGifWrap.classList.remove('dino-ended');
+    elements.dinoGifWrap.classList.remove('dino-hidden');
+
+    const cleanSrc = elements.dinoGif.src.split('?')[0];
+    elements.dinoGif.src = `${cleanSrc}?v=${Date.now()}`;
+
+    state.dinoOverlayTimeoutId = window.setTimeout(() => {
+      if (!isFinalFiveCaseWork()) {
+        return;
+      }
+      elements.dinoGifWrap.classList.add('show-overlay');
+      state.dinoOverlayTimeoutId = null;
+    }, DINO_HIT_MS);
+
+    state.dinoEndTimeoutId = window.setTimeout(() => {
+      if (!isFinalFiveCaseWork()) {
+        return;
+      }
+      elements.dinoGifWrap.classList.add('dino-ended');
+      state.dinoEndTimeoutId = null;
+    }, DINO_END_MS);
+
+    state.dinoHideTimeoutId = window.setTimeout(() => {
+      if (!isFinalFiveCaseWork()) {
+        return;
+      }
+      elements.dinoGifWrap.classList.add('dino-hidden');
+      state.dinoHideTimeoutId = null;
+    }, DINO_HIDE_AFTER_START_MS);
+  }
+
+  function updateDinoScene() {
+    if (isFinalFiveCaseWork()) {
+      startDinoSequence();
+      return;
+    }
+
+    resetDinoScene();
+  }
+
   function render() {
     const duration = getModeDuration();
     const progressRatio = duration > 0 ? state.remainingSeconds / duration : 0;
@@ -155,6 +242,7 @@
 
     updateFullscreenButtonLabel();
     renderStatus();
+    updateDinoScene();
     persistState();
   }
 
