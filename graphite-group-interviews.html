@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Graphite Group Interviews timer for case work and presentation rounds.">
+  <title>Graphite Group Interviews</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="graphite-group-interviews.css">
+</head>
+<body>
+  <main class="page">
+    <div class="mode-toggle" role="tablist" aria-label="Interview mode">
+      <button class="mode-button is-active" data-mode="caseWork" type="button" role="tab" aria-selected="true">Case Work</button>
+      <button class="mode-button" data-mode="presentation" type="button" role="tab" aria-selected="false">Presentation</button>
+    </div>
+
+    <header class="brand">
+      <img src="assets/graphite-logo-black-256.png" alt="Graphite Group logo" class="brand-logo">
+      <h1 class="brand-title">Graphite Group Interviews</h1>
+    </header>
+
+    <section class="timer-card" aria-label="Timer">
+      <p class="timer-mode" id="timerModeLabel">Case Work</p>
+      <div class="timer-display" id="timerDisplay" aria-live="polite">45:00</div>
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p class="timer-status" id="timerStatus">Ready to start.</p>
+
+      <div class="controls">
+        <button class="control-button control-button-primary" id="startPauseButton" type="button">Start</button>
+        <button class="control-button" id="resetButton" type="button">Reset</button>
+        <button class="control-button" id="minusMinuteButton" type="button">-1 min</button>
+        <button class="control-button" id="plusMinuteButton" type="button">+1 min</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="graphite-group-interviews.js"></script>
+</body>
+</html>
