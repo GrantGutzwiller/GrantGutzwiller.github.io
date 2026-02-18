@@ -1,7 +1,7 @@
 (() => {
   const MODES = {
     caseWork: { label: 'Case Work', durationSeconds: 45 * 60 },
-    presentation: { label: 'Presentation', durationSeconds: 5 * 60 }
+    presentation: { label: 'Presentation', durationSeconds: 10 * 60 }
   };
 
   const state = {
