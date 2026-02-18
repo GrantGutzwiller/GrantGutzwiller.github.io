@@ -81,6 +81,10 @@ body {
   user-select: none;
 }
 
+body.dvd-active .brand-logo {
+  opacity: 0;
+}
+
 .brand-title {
   margin: 0.9rem 0 0;
   font-family: inherit;
@@ -88,6 +92,43 @@ body {
   font-size: clamp(1.5rem, 4.6vw, 2.6rem);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.dvd-logo-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  display: none;
+}
+
+body.dvd-active .dvd-logo-layer {
+  display: block;
+}
+
+.dvd-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(220px, 56vw);
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: brightness(0) invert(1);
+  will-change: left, top;
+}
+
+.fireworks-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 75;
+  display: none;
+}
+
+body.fireworks-active .fireworks-layer {
+  display: block;
 }
 
 .timer-card {
@@ -249,5 +290,9 @@ body.final-five .final-five-scene {
 
   .controls {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dvd-logo {
+    width: min(160px, 42vw);
   }
 }
