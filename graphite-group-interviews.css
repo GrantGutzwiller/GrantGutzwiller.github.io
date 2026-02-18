@@ -116,6 +116,10 @@ body {
   letter-spacing: 0.08em;
 }
 
+body.final-five .timer-display {
+  animation: final-five-pulse 1.2s steps(2, end) infinite;
+}
+
 .progress-track {
   width: 100%;
   height: 2px;
@@ -142,10 +146,14 @@ body {
   text-transform: uppercase;
 }
 
+body.final-five .timer-status {
+  color: #ffffff;
+}
+
 .controls {
   margin-top: 0.35rem;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
@@ -173,6 +181,16 @@ body {
   border-color: #ffffff;
 }
 
+@keyframes final-five-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
 @media (max-width: 640px) {
   .page {
     padding-top: 0.85rem;
@@ -183,6 +201,6 @@ body {
   }
 
   .controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

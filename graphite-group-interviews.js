@@ -1,4 +1,5 @@
 (() => {
+  const STORAGE_KEY = 'graphite-group-interview-timer-v1';
   const MODES = {
     caseWork: { label: 'Case Work', durationSeconds: 45 * 60 },
     presentation: { label: 'Presentation', durationSeconds: 10 * 60 }
@@ -22,7 +23,8 @@
     startPauseButton: document.getElementById('startPauseButton'),
     resetButton: document.getElementById('resetButton'),
     minusMinuteButton: document.getElementById('minusMinuteButton'),
-    plusMinuteButton: document.getElementById('plusMinuteButton')
+    plusMinuteButton: document.getElementById('plusMinuteButton'),
+    fullscreenButton: document.getElementById('fullscreenButton')
   };
 
   function formatTime(totalSeconds) {
@@ -45,7 +47,76 @@
     state.remainingSeconds = Math.max(0, Math.ceil(deltaMs / 1000));
   }
 
+  function isFinalFiveCaseWork() {
+    return state.isRunning && state.mode === 'caseWork' && state.remainingSeconds > 0 && state.remainingSeconds <= 5 * 60;
+  }
+
+  function persistState() {
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          mode: state.mode,
+          remainingSeconds: state.remainingSeconds,
+          isRunning: state.isRunning,
+          endTimeMs: state.endTimeMs
+        })
+      );
+    } catch (error) {
+      // Ignore storage failures (private mode, quotas, etc.).
+    }
+  }
+
+  function restoreState() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const saved = JSON.parse(raw);
+      if (!saved || !Object.prototype.hasOwnProperty.call(MODES, saved.mode)) {
+        return;
+      }
+
+      state.mode = saved.mode;
+      state.isRunning = Boolean(saved.isRunning);
+      state.endTimeMs = Number(saved.endTimeMs) || 0;
+      state.remainingSeconds = Math.max(0, Math.floor(Number(saved.remainingSeconds) || 0));
+
+      if (state.isRunning && state.endTimeMs > 0) {
+        syncRemainingFromClock();
+        if (state.remainingSeconds <= 0) {
+          state.remainingSeconds = 0;
+          state.isRunning = false;
+          state.endTimeMs = 0;
+        }
+      } else if (state.remainingSeconds === 0) {
+        state.remainingSeconds = getModeDuration();
+      }
+    } catch (error) {
+      // Ignore malformed cached state.
+    }
+  }
+
+  function isFullscreen() {
+    return Boolean(document.fullscreenElement);
+  }
+
+  function updateFullscreenButtonLabel() {
+    if (!elements.fullscreenButton) {
+      return;
+    }
+
+    elements.fullscreenButton.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen';
+  }
+
   function renderStatus() {
+    if (isFinalFiveCaseWork()) {
+      elements.timerStatus.textContent = 'Final 5 minutes.';
+      return;
+    }
+
     if (state.isRunning) {
       elements.timerStatus.textContent = 'Running...';
       return;
@@ -74,6 +145,7 @@
     elements.progressFill.style.width = `${progressPercent}%`;
     elements.startPauseButton.textContent = state.isRunning ? 'Pause' : 'Start';
     elements.startPauseButton.setAttribute('aria-pressed', state.isRunning ? 'true' : 'false');
+    document.body.classList.toggle('final-five', isFinalFiveCaseWork());
 
     elements.modeButtons.forEach((button) => {
       const isActive = button.dataset.mode === state.mode;
@@ -81,7 +153,9 @@
       button.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
 
+    updateFullscreenButtonLabel();
     renderStatus();
+    persistState();
   }
 
   function clearTicking() {
@@ -95,6 +169,7 @@
     syncRemainingFromClock();
     state.isRunning = false;
     clearTicking();
+    state.endTimeMs = 0;
   }
 
   function playEndSound() {
@@ -219,6 +294,19 @@
     render();
   }
 
+  async function toggleFullscreen() {
+    try {
+      if (isFullscreen()) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (error) {
+      // Ignore fullscreen API rejections.
+    }
+    updateFullscreenButtonLabel();
+  }
+
   function bindEvents() {
     elements.modeButtons.forEach((button) => {
       button.addEventListener('click', async () => {
@@ -231,8 +319,18 @@
     elements.resetButton.addEventListener('click', resetTimer);
     elements.minusMinuteButton.addEventListener('click', () => adjustMinutes(-1));
     elements.plusMinuteButton.addEventListener('click', () => adjustMinutes(1));
+    if (elements.fullscreenButton) {
+      elements.fullscreenButton.addEventListener('click', toggleFullscreen);
+    }
+    document.addEventListener('fullscreenchange', updateFullscreenButtonLabel);
   }
 
+  restoreState();
   bindEvents();
+  if (state.isRunning && state.remainingSeconds > 0) {
+    state.endTimeMs = Date.now() + state.remainingSeconds * 1000;
+    clearTicking();
+    state.intervalId = window.setInterval(tick, 200);
+  }
   render();
 })();
