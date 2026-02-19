@@ -345,29 +345,47 @@
     }
 
     const context = state.audioContext;
+    const scheduleChime = () => {
+      const now = context.currentTime + 0.02;
+      frequencies.forEach((frequency, index) => {
+        const toneStart = now + index * 0.16;
+        const toneEnd = toneStart + 0.26;
+        const baseOsc = context.createOscillator();
+        const sparkleOsc = context.createOscillator();
+        const baseGain = context.createGain();
+        const sparkleGain = context.createGain();
+
+        baseOsc.type = 'triangle';
+        sparkleOsc.type = 'sine';
+        baseOsc.frequency.setValueAtTime(frequency, toneStart);
+        sparkleOsc.frequency.setValueAtTime(frequency * 2, toneStart);
+
+        baseGain.gain.setValueAtTime(0.0001, toneStart);
+        baseGain.gain.exponentialRampToValueAtTime(0.36, toneStart + 0.014);
+        baseGain.gain.exponentialRampToValueAtTime(0.0001, toneEnd);
+
+        sparkleGain.gain.setValueAtTime(0.0001, toneStart);
+        sparkleGain.gain.exponentialRampToValueAtTime(0.09, toneStart + 0.018);
+        sparkleGain.gain.exponentialRampToValueAtTime(0.0001, toneEnd);
+
+        baseOsc.connect(baseGain);
+        sparkleOsc.connect(sparkleGain);
+        baseGain.connect(context.destination);
+        sparkleGain.connect(context.destination);
+
+        baseOsc.start(toneStart);
+        sparkleOsc.start(toneStart);
+        baseOsc.stop(toneEnd);
+        sparkleOsc.stop(toneEnd);
+      });
+    };
+
     if (context.state === 'suspended') {
-      context.resume().catch(() => {});
+      context.resume().then(scheduleChime).catch(() => {});
+      return;
     }
 
-    const now = context.currentTime;
-    frequencies.forEach((frequency, index) => {
-      const toneStart = now + index * 0.14;
-      const toneEnd = toneStart + 0.16;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.type = 'triangle';
-      oscillator.frequency.setValueAtTime(frequency, toneStart);
-
-      gain.gain.setValueAtTime(0.0001, toneStart);
-      gain.gain.exponentialRampToValueAtTime(0.12, toneStart + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, toneEnd);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(toneStart);
-      oscillator.stop(toneEnd);
-    });
+    scheduleChime();
   }
 
   function maybePlayMilestoneChimes(remainingPrecise) {
