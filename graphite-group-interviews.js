@@ -5,6 +5,7 @@
   const DINO_HIT_MS = 9450;
   const DINO_END_MS = 10000;
   const DINO_HIDE_AFTER_START_MS = 15000;
+  const CASE_WORK_MILESTONE_SECONDS = [15 * 60, 5 * 60 + 10, 60];
 
   const DVD_START_SECONDS = 40 * 60;
   const CORNER_HIT_SECONDS = 16 * 60;
@@ -76,6 +77,7 @@
     lastObservedRemainingPrecise: null,
     dvdCurrentCornerContactKey: null,
     dvdLastCornerFireworkMs: null,
+    lastMilestoneRemainingPrecise: null,
 
     fireworksActive: false,
     fireworksParticles: [],
@@ -335,6 +337,61 @@
     }
 
     elements.timerStatus.textContent = 'Paused.';
+  }
+
+  function playMilestoneChime(frequencies) {
+    if (!state.audioContext || !Array.isArray(frequencies) || frequencies.length === 0) {
+      return;
+    }
+
+    const context = state.audioContext;
+    if (context.state === 'suspended') {
+      context.resume().catch(() => {});
+    }
+
+    const now = context.currentTime;
+    frequencies.forEach((frequency, index) => {
+      const toneStart = now + index * 0.14;
+      const toneEnd = toneStart + 0.16;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(frequency, toneStart);
+
+      gain.gain.setValueAtTime(0.0001, toneStart);
+      gain.gain.exponentialRampToValueAtTime(0.12, toneStart + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, toneEnd);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(toneStart);
+      oscillator.stop(toneEnd);
+    });
+  }
+
+  function maybePlayMilestoneChimes(remainingPrecise) {
+    const previous = state.lastMilestoneRemainingPrecise;
+    if (!state.isRunning || state.mode !== 'caseWork' || !isFiniteNumber(previous)) {
+      state.lastMilestoneRemainingPrecise = remainingPrecise;
+      return;
+    }
+
+    CASE_WORK_MILESTONE_SECONDS.forEach((threshold) => {
+      if (previous > threshold && remainingPrecise <= threshold) {
+        if (threshold === 15 * 60) {
+          playMilestoneChime([523.25, 659.25, 783.99]);
+          return;
+        }
+        if (threshold === 5 * 60 + 10) {
+          playMilestoneChime([587.33, 739.99, 987.77]);
+          return;
+        }
+        playMilestoneChime([392.0, 523.25, 659.25]);
+      }
+    });
+
+    state.lastMilestoneRemainingPrecise = remainingPrecise;
   }
 
   function resetDinoScene() {
@@ -944,6 +1001,7 @@
     state.dvdReturnTo = null;
     state.dvdStartAnchor = null;
     state.lastObservedRemainingPrecise = null;
+    state.lastMilestoneRemainingPrecise = null;
     state.dvdCurrentCornerContactKey = null;
     state.dvdLastCornerFireworkMs = null;
     setDvdScaleImmediate(DVD_MAX_SCALE);
@@ -1151,6 +1209,7 @@
 
     updateFullscreenButtonLabel();
     renderStatus();
+    maybePlayMilestoneChimes(remainingPrecise);
     updateDvdPhase();
     updateDinoScene();
     state.lastObservedRemainingPrecise = remainingPrecise;
