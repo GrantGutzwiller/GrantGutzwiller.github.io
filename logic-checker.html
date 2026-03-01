@@ -86,20 +86,20 @@
     /* ── GRID LAYOUT ── */
     .project-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 0;
+      grid-template-columns: 1fr 1fr;
+      gap: 7rem;
       padding: 0 5rem;
       animation: fadeUp 0.8s 0.2s ease forwards;
       opacity: 0;
     }
 
     .col-intro {
-      padding: 3.5rem 4rem 3.5rem 0;
-      border-right: 1px solid var(--rule);
+      padding: 3.5rem 0;
     }
 
     .col-sidebar {
-      padding: 3.5rem 0 3.5rem 3.5rem;
+      border-left: 1px solid var(--rule);
+      padding: 3.5rem 0 3.5rem 5rem;
     }
 
     .body-copy {
@@ -107,7 +107,7 @@
       font-weight: 300;
       line-height: 1.75;
       color: var(--ink);
-      max-width: 54ch;
+      max-width: none;
     }
 
     .body-copy p + p {
@@ -261,6 +261,7 @@
       }
 
       .col-sidebar {
+        border-left: none;
         padding: 2.5rem 0;
       }
 
