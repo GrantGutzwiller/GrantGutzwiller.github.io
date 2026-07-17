@@ -45,7 +45,8 @@
     { name: 'Copenhagen, Denmark', lat: 55.6761, lon: 12.5683, type: 'travel' },
     { name: 'Budapest, Hungary', lat: 47.4979, lon: 19.0402, type: 'travel' },
     // Asia
-    { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503, type: 'travel' },
+    { name: 'Kyoto, Japan', lat: 35.0116, lon: 135.7681, type: 'travel' },
+    { name: 'Hiroshima, Japan', lat: 34.3853, lon: 132.4553, type: 'travel' },
   ];
 
   const COLORS = {
