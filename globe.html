@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Travels — Grant Gutzwiller">
+    <meta property="og:title" content="Travels — Grant Gutzwiller">
+    <meta property="og:description" content="Places I've been">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>Travels — Grant Gutzwiller</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="globe.css">
+</head>
+<body class="loaded">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="/" class="logo">Grant Gutzwiller</a>
+        <div class="nav-links">
+            <a href="essays">Essays</a>
+            <a href="projects" data-feature="projects">Projects</a>
+            <a href="bookshelf">Bookshelf</a>
+            <a href="gallery">Gallery</a>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <span class="page-descriptor">PLACES I'VE BEEN</span>
+    </header>
+
+    <!-- Globe -->
+    <main class="globe-main">
+        <div class="globe-wrap">
+            <canvas id="globe-canvas" aria-label="Interactive globe showing places Grant has traveled"></canvas>
+            <div class="globe-tooltip" id="globe-tooltip"></div>
+        </div>
+        <div class="globe-legend">
+            <span class="legend-item"><span class="legend-dot legend-dot-home"></span>HOME — SAN FRANCISCO</span>
+            <span class="legend-item"><span class="legend-dot legend-dot-travel"></span>TRAVELED</span>
+            <span class="legend-hint">DRAG TO SPIN</span>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span class="footer-left">&copy; Grant Gutzwiller</span>
+        <span class="footer-right"><a href="https://www.linkedin.com/in/grant-gutzwiller/" target="_blank" rel="noopener noreferrer" class="footer-linkedin">IN</a> · Claremont, CA · <span id="current-time"></span></span>
+    </footer>
+
+    <script src="globe.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
