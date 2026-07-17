@@ -523,10 +523,16 @@ function fitCase() {
   if (phoneMQ.matches) { caseEl.style.transform = ''; bookcase.style.height = ''; return; }
   caseEl.style.transform = 'none';
   const cs = getComputedStyle(bookcase);
-  const avail = bookcase.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const natural = caseEl.offsetWidth;
-  const scale = Math.min(1, avail / natural);
-  caseEl.style.transform = `scale(${scale})`;
+  const availW = bookcase.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  // fit the case's height between the top of the bookcase and the footer,
+  // so the whole shelf sits on one page with no scrolling
+  const footer = document.querySelector('.footer');
+  const availH = window.innerHeight - bookcase.getBoundingClientRect().top
+    - (footer ? footer.offsetHeight : 0)
+    - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const scale = Math.min(1, availW / caseEl.offsetWidth, availH / caseEl.offsetHeight);
+  const shift = Math.max(0, (availW - caseEl.offsetWidth * scale) / 2);
+  caseEl.style.transform = `translateX(${shift}px) scale(${scale})`;
   bookcase.style.height = Math.ceil(caseEl.offsetHeight * scale
     + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)) + 'px';
 }
