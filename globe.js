@@ -28,6 +28,7 @@
   let rotation = { lambda: 100, phi: 25 }; // start centered near the western US
   let autoSpin = true;
   let landPoints = []; // [lat, lon] stipple grid on land
+  let borderArcs = []; // decoded topojson arcs: coastlines + country borders
   let projected = []; // screen positions of PLACES this frame
 
   // ── TOPOJSON DECODE ──
@@ -40,6 +41,7 @@
         return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
       });
     });
+    borderArcs = arcs; // every arc is a coastline or shared country border
     function ring(arcIdxs) {
       const pts = [];
       arcIdxs.forEach((i) => {
@@ -101,7 +103,7 @@
     });
     const img = octx.getImageData(0, 0, W, H).data;
     const pts = [];
-    const latStep = 1.4;
+    const latStep = 0.95;
     for (let lat = -88; lat <= 88; lat += latStep) {
       // keep dot spacing roughly even by widening lon step toward the poles
       const lonStep = latStep / Math.max(Math.cos((lat * Math.PI) / 180), 0.12);
@@ -144,7 +146,7 @@
     ctx.stroke();
 
     // land stipple
-    const dotR = size / 480;
+    const dotR = size / 620;
     ctx.fillStyle = COLORS.land;
     for (let i = 0; i < landPoints.length; i++) {
       const [x, y, vis] = project(landPoints[i][0], landPoints[i][1]);
@@ -154,6 +156,25 @@
       ctx.arc(c + x * R, c + y * R, dotR, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
+
+    // country borders + coastlines
+    ctx.strokeStyle = COLORS.land;
+    ctx.lineWidth = Math.max(0.6, size / 1400);
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    for (let a = 0; a < borderArcs.length; a++) {
+      const arc = borderArcs[a];
+      let pen = false;
+      for (let i = 0; i < arc.length; i++) {
+        const [x, y, vis] = project(arc[i][1], arc[i][0]);
+        if (!vis) { pen = false; continue; }
+        const sx = c + x * R, sy = c + y * R;
+        if (pen) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy);
+        pen = true;
+      }
+    }
+    ctx.stroke();
     ctx.globalAlpha = 1;
 
     // place markers
@@ -203,7 +224,7 @@
     if (dragging) {
       const k = 0.28 * (640 / canvas.clientWidth);
       rotation.lambda += (e.clientX - last[0]) * k;
-      rotation.phi -= (e.clientY - last[1]) * k;
+      rotation.phi += (e.clientY - last[1]) * k;
       rotation.phi = Math.max(-75, Math.min(75, rotation.phi));
       last = [e.clientX, e.clientY];
     } else {
@@ -239,7 +260,7 @@
   canvas.addEventListener('pointerleave', () => tooltip.classList.remove('visible'));
 
   // ── INIT ──
-  fetch('data/land-110m.json')
+  fetch('data/countries-110m.json')
     .then((r) => r.json())
     .then((topo) => {
       landPoints = buildStipple(decodeTopo(topo));
