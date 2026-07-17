@@ -103,7 +103,7 @@
     });
     const img = octx.getImageData(0, 0, W, H).data;
     const pts = [];
-    const latStep = 0.95;
+    const latStep = 1.25;
     for (let lat = -88; lat <= 88; lat += latStep) {
       // keep dot spacing roughly even by widening lon step toward the poles
       const lonStep = latStep / Math.max(Math.cos((lat * Math.PI) / 180), 0.12);
@@ -146,7 +146,7 @@
     ctx.stroke();
 
     // land stipple
-    const dotR = size / 620;
+    const dotR = size / 540;
     ctx.fillStyle = COLORS.land;
     for (let i = 0; i < landPoints.length; i++) {
       const [x, y, vis] = project(landPoints[i][0], landPoints[i][1]);
@@ -160,8 +160,8 @@
 
     // country borders + coastlines
     ctx.strokeStyle = COLORS.land;
-    ctx.lineWidth = Math.max(0.6, size / 1400);
-    ctx.globalAlpha = 0.45;
+    ctx.lineWidth = Math.max(1, size / 900);
+    ctx.globalAlpha = 0.55;
     ctx.beginPath();
     for (let a = 0; a < borderArcs.length; a++) {
       const arc = borderArcs[a];
