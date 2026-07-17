@@ -17,7 +17,7 @@
     { name: 'Joshua Tree, CA', lat: 33.8734, lon: -115.9010, type: 'travel' },
     { name: 'Crater Lake, OR', lat: 42.9446, lon: -122.1090, type: 'travel' },
     { name: 'Sun Valley, ID', lat: 43.6971, lon: -114.3517, type: 'travel' },
-    { name: 'Lake Tahoe, CA', lat: 39.0968, lon: -120.0324, type: 'travel' },
+    { name: 'Tahoe City, CA', lat: 39.1677, lon: -120.1452, type: 'travel' },
     { name: 'Big Bear, CA', lat: 34.2439, lon: -116.9114, type: 'travel' },
     { name: 'Park City, UT', lat: 40.6461, lon: -111.4980, type: 'travel' },
     { name: 'Deer Valley, UT', lat: 40.6374, lon: -111.4783, type: 'travel' },
@@ -25,14 +25,14 @@
     { name: 'Alta, UT', lat: 40.5884, lon: -111.6386, type: 'travel' },
     { name: 'Jackson Hole, WY', lat: 43.5875, lon: -110.8279, type: 'travel' },
     // Canada
-    { name: 'Whistler Blackcomb, BC', lat: 50.1163, lon: -122.9574, type: 'travel' },
+    { name: 'Whistler, BC', lat: 50.1163, lon: -122.9574, type: 'travel' },
     { name: 'Phoenix, AZ', lat: 33.4484, lon: -112.0740, type: 'travel' },
     { name: 'New York, NY', lat: 40.7128, lon: -74.0060, type: 'travel' },
-    { name: 'Big Island, HI', lat: 19.6400, lon: -155.9969, type: 'travel' },
-    { name: 'Maui, HI', lat: 20.7984, lon: -156.3319, type: 'travel' },
+    { name: 'Kona, Big Island, HI', lat: 19.6400, lon: -155.9969, type: 'travel' },
+    { name: 'Lahaina, Maui, HI', lat: 20.8783, lon: -156.6825, type: 'travel' },
     // Americas
     { name: 'Tequisquiapan, Mexico', lat: 20.5211, lon: -99.8951, type: 'travel' },
-    { name: 'Costa Rica', lat: 9.9281, lon: -84.0907, type: 'travel' },
+    { name: 'San José, Costa Rica', lat: 9.9281, lon: -84.0907, type: 'travel' },
     // Europe
     { name: 'London, England', lat: 51.5074, lon: -0.1278, type: 'travel' },
     { name: 'Paris, France', lat: 48.8566, lon: 2.3522, type: 'travel' },
@@ -62,6 +62,23 @@
 
   let rotation = { lambda: 100, phi: 25 }; // start centered near the western US
   let autoSpin = true;
+  let zoom = 1;
+
+  // shrink markers that sit in a tight cluster (relaxes as you zoom in)
+  {
+    const D = Math.PI / 180;
+    PLACES.forEach((p) => {
+      let n = 0;
+      PLACES.forEach((q) => {
+        if (p === q) return;
+        const d = Math.acos(Math.min(1,
+          Math.sin(p.lat * D) * Math.sin(q.lat * D) +
+          Math.cos(p.lat * D) * Math.cos(q.lat * D) * Math.cos((p.lon - q.lon) * D)));
+        if (d < 2.5 * D) n++;
+      });
+      p.crowd = 1 / Math.sqrt(1 + n * 0.9);
+    });
+  }
   let landPoints = []; // [lat, lon] stipple grid on land
   let borderArcs = []; // decoded topojson arcs: coastlines + country borders
   let stateLines = []; // US state boundary polylines of [lon, lat]
@@ -171,7 +188,7 @@
   function draw() {
     const size = canvas.width;
     const c = size / 2;
-    const R = size * 0.46;
+    const R = size * 0.46 * zoom;
     ctx.clearRect(0, 0, size, size);
 
     // globe edge
@@ -182,7 +199,7 @@
     ctx.stroke();
 
     // land stipple
-    const dotR = size / 540;
+    const dotR = (size / 540) * Math.pow(zoom, 0.75);
     ctx.fillStyle = COLORS.land;
     for (let i = 0; i < landPoints.length; i++) {
       const [x, y, vis] = project(landPoints[i][0], landPoints[i][1]);
@@ -214,8 +231,9 @@
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
-    strokeLines(borderArcs, Math.max(1.2, size / 700), 0.7); // countries + coasts
-    strokeLines(stateLines, Math.max(0.8, size / 1100), 0.4); // US states
+    const lw = Math.sqrt(zoom);
+    strokeLines(borderArcs, Math.max(1.2, size / 700) * lw, 0.7); // countries + coasts
+    strokeLines(stateLines, Math.max(0.8, size / 1100) * lw, 0.4); // US states
 
     // place markers
     projected = [];
@@ -224,7 +242,8 @@
       if (!vis) return;
       const sx = c + x * R, sy = c + y * R;
       projected.push({ ...p, sx, sy });
-      const r = p.type === 'home' ? size / 90 : size / 130;
+      const cs = p.type === 'home' ? 1 : Math.min(1, p.crowd * Math.sqrt(zoom));
+      const r = (p.type === 'home' ? size / 90 : size / 130) * cs * Math.pow(zoom, 0.4);
       ctx.beginPath();
       ctx.arc(sx, sy, r * 2.1, 0, Math.PI * 2);
       ctx.fillStyle = p.type === 'home' ? 'rgba(201,162,39,0.18)' : 'rgba(201,74,43,0.14)';
@@ -237,7 +256,7 @@
   }
 
   function frame() {
-    if (autoSpin) rotation.lambda += 0.045;
+    if (autoSpin) rotation.lambda += 0.045 / zoom;
     draw();
     requestAnimationFrame(frame);
   }
@@ -262,7 +281,7 @@
   });
   canvas.addEventListener('pointermove', (e) => {
     if (dragging) {
-      const k = 0.28 * (640 / canvas.clientWidth);
+      const k = 0.28 * (640 / canvas.clientWidth) / zoom;
       rotation.lambda += (e.clientX - last[0]) * k;
       rotation.phi += (e.clientY - last[1]) * k;
       rotation.phi = Math.max(-75, Math.min(75, rotation.phi));
@@ -298,6 +317,11 @@
     }
   }
   canvas.addEventListener('pointerleave', () => tooltip.classList.remove('visible'));
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    zoom = Math.max(1, Math.min(6, zoom * Math.exp(-e.deltaY * 0.0012)));
+  }, { passive: false });
 
   // ── INIT ──
   Promise.all([
