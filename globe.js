@@ -28,11 +28,15 @@
     { name: 'Whistler, BC', lat: 50.1163, lon: -122.9574, type: 'travel' },
     { name: 'Phoenix, AZ', lat: 33.4484, lon: -112.0740, type: 'travel' },
     { name: 'New York, NY', lat: 40.7128, lon: -74.0060, type: 'travel' },
+    { name: 'Seattle, WA', lat: 47.6062, lon: -122.3321, type: 'travel' },
+    { name: 'Juneau, AK', lat: 58.3019, lon: -134.4197, type: 'travel' },
     { name: 'Kona, Big Island, HI', lat: 19.6400, lon: -155.9969, type: 'travel' },
     { name: 'Lahaina, Maui, HI', lat: 20.8783, lon: -156.6825, type: 'travel' },
     // Americas
     { name: 'Tequisquiapan, Mexico', lat: 20.5211, lon: -99.8951, type: 'travel' },
     { name: 'San José, Costa Rica', lat: 9.9281, lon: -84.0907, type: 'travel' },
+    { name: 'St. George\'s, Grenada', lat: 12.0564, lon: -61.7485, type: 'travel' },
+    { name: 'Nassau, Bahamas', lat: 25.0443, lon: -77.3504, type: 'travel' },
     // Europe
     { name: 'London, England', lat: 51.5074, lon: -0.1278, type: 'travel' },
     { name: 'Paris, France', lat: 48.8566, lon: 2.3522, type: 'travel' },
@@ -44,6 +48,11 @@
     { name: 'Venice, Italy', lat: 45.4408, lon: 12.3155, type: 'travel' },
     { name: 'Copenhagen, Denmark', lat: 55.6761, lon: 12.5683, type: 'travel' },
     { name: 'Budapest, Hungary', lat: 47.4979, lon: 19.0402, type: 'travel' },
+    { name: 'Dubrovnik, Croatia', lat: 42.6507, lon: 18.0944, type: 'travel' },
+    { name: 'Korčula, Croatia', lat: 42.9603, lon: 17.1361, type: 'travel' },
+    { name: 'Bled, Slovenia', lat: 46.3683, lon: 14.1146, type: 'travel' },
+    { name: 'Hydra, Greece', lat: 37.3496, lon: 23.4645, type: 'travel' },
+    { name: 'Delphi, Greece', lat: 38.4824, lon: 22.5010, type: 'travel' },
     // Asia
     { name: 'Kyoto, Japan', lat: 35.0116, lon: 135.7681, type: 'travel' },
     { name: 'Hiroshima, Japan', lat: 34.3853, lon: 132.4553, type: 'travel' },
