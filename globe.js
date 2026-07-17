@@ -48,7 +48,6 @@
     { name: 'Venice, Italy', lat: 45.4408, lon: 12.3155, type: 'travel' },
     { name: 'Copenhagen, Denmark', lat: 55.6761, lon: 12.5683, type: 'travel' },
     { name: 'Budapest, Hungary', lat: 47.4979, lon: 19.0402, type: 'travel' },
-    { name: 'Dubrovnik, Croatia', lat: 42.6507, lon: 18.0944, type: 'travel' },
     { name: 'Korčula, Croatia', lat: 42.9603, lon: 17.1361, type: 'travel' },
     { name: 'Bled, Slovenia', lat: 46.3683, lon: 14.1146, type: 'travel' },
     { name: 'Hydra, Greece', lat: 37.3496, lon: 23.4645, type: 'travel' },
