@@ -144,12 +144,13 @@ function favEl(b) {
 }
 function stackEl(list) {
   const stack = document.createElement('div'); stack.className = 'bk-stack';
-  // largest book on the bottom, smallest on top (column-reverse → first child = bottom)
-  const sorted = [...list].sort((a, b) => (b.h - a.h) || (b.thick - a.thick));
-  sorted.forEach((b, k) => {
+  // list arrives bottom-first with final lengths (w) precomputed by the generator:
+  // bottom keeps its true length, books above nest a few px shorter (longer titles
+  // get the longer slots), left edges flush. column-reverse -> first child = bottom.
+  list.forEach((b) => {
     const lay = document.createElement('div'); lay.className = 'bk-lay';
     lay.style.cssText = `--sc:${b.spineColor};--tc:${b.textColor};`
-      + `--w:${b.h}px;--lh:${b.thick}px;--off:0px;`;   // all layers flush on the left edge
+      + `--w:${b.w || b.h}px;--lh:${b.thick}px;--off:0px;`;
     lay.innerHTML = `<div class="bk-lay-in"><div class="le"><span>${esc(b.title)}</span></div><div class="tp"></div><div class="pg"></div></div>`;
     interactive(lay, b); stack.appendChild(lay);
   });

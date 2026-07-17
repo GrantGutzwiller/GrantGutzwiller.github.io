@@ -198,6 +198,21 @@ def bd(r,ck): return {"title":r["title"],"author":r["author"],"cover":r[ck],
 JOURNALS=[{"title":"My Travels","author":"a travel log","journal":True,"href":"travels",
     "favorite":False,"spineColor":"#8a6f4e","textColor":"#f2e8d2","thick":34,"h":152,
     "cover_uri":"","cover_real":""}]
+
+import hashlib as _hl
+def _tseed(t): return int(_hl.md5(t.encode()).hexdigest(),16)
+def finalize_stack(run, ck):
+    bs=sorted(run, key=lambda r:(-r["h"], -len(r["title"])))
+    n=len(bs); W=bs[0]["h"]; mn=bs[-1]["h"]
+    # spread the pile's total spread evenly down the levels (4-10px per step),
+    # with a little seeded wobble so it doesn't look machine-regular
+    s=max(4.0, min(10.0, (W-mn)/max(n-1,1)))
+    out=[]; prev=None
+    for i,r in enumerate(bs):
+        w=round(W-i*s)-(0 if i==0 else _tseed(r["title"])%3)
+        if prev is not None and w>prev-4: w=prev-4
+        out.append({**bd(r,ck),"w":w}); prev=w
+    return out
 def build_layout(recs,ck):
     shelves=[]; obj_k=0
     ordered=[r for cat in SPECTRUM for r in recs if r["cat"]==cat]
@@ -230,7 +245,7 @@ def build_layout(recs,ck):
             if (r["title"] in STACK_ME or since_s>=6) and not prev_stack:
                 run,j=stack_run(grp,i)
                 if len(run)>=3:               # only commit a real 3–5 high stack
-                    slots.append({"kind":"stack","books":[bd(b,ck) for b in run]}); i=j; since_s=0; continue
+                    slots.append({"kind":"stack","books":finalize_stack(run,ck)}); i=j; since_s=0; continue
             if r["favorite"]:
                 slot={"kind":"spine","book":bd(r,ck),"lean":0} if prev_face else {"kind":"face","book":bd(r,ck)}
                 slots.append(slot); i+=1; since_s+=1; continue
