@@ -17,6 +17,15 @@
     { name: 'Joshua Tree, CA', lat: 33.8734, lon: -115.9010, type: 'travel' },
     { name: 'Crater Lake, OR', lat: 42.9446, lon: -122.1090, type: 'travel' },
     { name: 'Sun Valley, ID', lat: 43.6971, lon: -114.3517, type: 'travel' },
+    { name: 'Lake Tahoe, CA', lat: 39.0968, lon: -120.0324, type: 'travel' },
+    { name: 'Big Bear, CA', lat: 34.2439, lon: -116.9114, type: 'travel' },
+    { name: 'Park City, UT', lat: 40.6461, lon: -111.4980, type: 'travel' },
+    { name: 'Deer Valley, UT', lat: 40.6374, lon: -111.4783, type: 'travel' },
+    { name: 'Snowbird, UT', lat: 40.5830, lon: -111.6538, type: 'travel' },
+    { name: 'Alta, UT', lat: 40.5884, lon: -111.6386, type: 'travel' },
+    { name: 'Jackson Hole, WY', lat: 43.5875, lon: -110.8279, type: 'travel' },
+    // Canada
+    { name: 'Whistler Blackcomb, BC', lat: 50.1163, lon: -122.9574, type: 'travel' },
     { name: 'Phoenix, AZ', lat: 33.4484, lon: -112.0740, type: 'travel' },
     { name: 'New York, NY', lat: 40.7128, lon: -74.0060, type: 'travel' },
     { name: 'Big Island, HI', lat: 19.6400, lon: -155.9969, type: 'travel' },
@@ -55,6 +64,7 @@
   let autoSpin = true;
   let landPoints = []; // [lat, lon] stipple grid on land
   let borderArcs = []; // decoded topojson arcs: coastlines + country borders
+  let stateLines = []; // US state boundary polylines of [lon, lat]
   let projected = []; // screen positions of PLACES this frame
 
   // ── TOPOJSON DECODE ──
@@ -184,24 +194,28 @@
     }
     ctx.globalAlpha = 1;
 
-    // country borders + coastlines
-    ctx.strokeStyle = COLORS.land;
-    ctx.lineWidth = Math.max(1, size / 900);
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath();
-    for (let a = 0; a < borderArcs.length; a++) {
-      const arc = borderArcs[a];
-      let pen = false;
-      for (let i = 0; i < arc.length; i++) {
-        const [x, y, vis] = project(arc[i][1], arc[i][0]);
-        if (!vis) { pen = false; continue; }
-        const sx = c + x * R, sy = c + y * R;
-        if (pen) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy);
-        pen = true;
+    // boundary lines: [polylines, width, alpha]
+    function strokeLines(lines, width, alpha) {
+      ctx.strokeStyle = COLORS.land;
+      ctx.lineWidth = width;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      for (let a = 0; a < lines.length; a++) {
+        const line = lines[a];
+        let pen = false;
+        for (let i = 0; i < line.length; i++) {
+          const [x, y, vis] = project(line[i][1], line[i][0]);
+          if (!vis) { pen = false; continue; }
+          const sx = c + x * R, sy = c + y * R;
+          if (pen) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy);
+          pen = true;
+        }
       }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    strokeLines(borderArcs, Math.max(1.2, size / 700), 0.7); // countries + coasts
+    strokeLines(stateLines, Math.max(0.8, size / 1100), 0.4); // US states
 
     // place markers
     projected = [];
@@ -286,11 +300,13 @@
   canvas.addEventListener('pointerleave', () => tooltip.classList.remove('visible'));
 
   // ── INIT ──
-  fetch('data/countries-110m.json')
-    .then((r) => r.json())
-    .then((topo) => {
-      landPoints = buildStipple(decodeTopo(topo));
-      resize();
-      frame();
-    });
+  Promise.all([
+    fetch('data/countries-110m.json').then((r) => r.json()),
+    fetch('data/state-lines-110m.json').then((r) => r.json()),
+  ]).then(([topo, states]) => {
+    landPoints = buildStipple(decodeTopo(topo));
+    stateLines = states;
+    resize();
+    frame();
+  });
 })();
