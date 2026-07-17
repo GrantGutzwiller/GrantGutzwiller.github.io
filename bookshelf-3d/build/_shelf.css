@@ -425,5 +425,14 @@ body { background:var(--bg); color:var(--ink); font-family:var(--serif); min-hei
   /* soft fade hinting the shelf scrolls sideways */
   .shelf::after { content:''; position:absolute; top:0; right:0; width:30px; height:calc(100% - 18px);
     background:linear-gradient(90deg, rgba(236,228,213,0), var(--back)); z-index:5; pointer-events:none; }
+  /* the back-wall shadow and floor are absolutely positioned, so they scroll away
+     when a row is swiped — repaint them as the row's own background instead,
+     which covers the full scrollable width (background-attachment: local) */
+  .shelf-row::before { content:none; }
+  .deck { display:none; }
+  .shelf-row { background-image:
+      linear-gradient(180deg, rgba(26,15,6,0.55) 0%, rgba(26,15,6,0.14) 27px, rgba(26,15,6,0) 52px),
+      linear-gradient(0deg, var(--wood-dark) 0px, var(--wood-mid) 7px, var(--wood-face) 17px, var(--wood-hi) 25px, rgba(0,0,0,0) 26px);
+    background-attachment: local, local; }
 }
 @media (prefers-reduced-motion:reduce) { .shelf { animation:none; opacity:1; } * { transition:none !important; } }
