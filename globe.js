@@ -8,9 +8,35 @@
   // lat / lon in degrees. type: 'home' renders gold, 'travel' renders accent.
   const PLACES = [
     { name: 'San Francisco, CA', lat: 37.7749, lon: -122.4194, type: 'home' },
+    // United States
     { name: 'Claremont, CA', lat: 34.0967, lon: -117.7198, type: 'travel' },
-    // Add travels here:
-    // { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503, type: 'travel' },
+    { name: 'Los Angeles, CA', lat: 34.0522, lon: -118.2437, type: 'travel' },
+    { name: 'Yosemite, CA', lat: 37.8651, lon: -119.5383, type: 'travel' },
+    { name: 'Mammoth, CA', lat: 37.6485, lon: -118.9721, type: 'travel' },
+    { name: 'Death Valley, CA', lat: 36.5323, lon: -116.9325, type: 'travel' },
+    { name: 'Joshua Tree, CA', lat: 33.8734, lon: -115.9010, type: 'travel' },
+    { name: 'Crater Lake, OR', lat: 42.9446, lon: -122.1090, type: 'travel' },
+    { name: 'Sun Valley, ID', lat: 43.6971, lon: -114.3517, type: 'travel' },
+    { name: 'Phoenix, AZ', lat: 33.4484, lon: -112.0740, type: 'travel' },
+    { name: 'New York, NY', lat: 40.7128, lon: -74.0060, type: 'travel' },
+    { name: 'Big Island, HI', lat: 19.6400, lon: -155.9969, type: 'travel' },
+    { name: 'Maui, HI', lat: 20.7984, lon: -156.3319, type: 'travel' },
+    // Americas
+    { name: 'Tequisquiapan, Mexico', lat: 20.5211, lon: -99.8951, type: 'travel' },
+    { name: 'Costa Rica', lat: 9.9281, lon: -84.0907, type: 'travel' },
+    // Europe
+    { name: 'London, England', lat: 51.5074, lon: -0.1278, type: 'travel' },
+    { name: 'Paris, France', lat: 48.8566, lon: 2.3522, type: 'travel' },
+    { name: 'Nice, France', lat: 43.7102, lon: 7.2620, type: 'travel' },
+    { name: 'Chamonix, France', lat: 45.9237, lon: 6.8694, type: 'travel' },
+    { name: 'Mont Saint-Michel, France', lat: 48.6361, lon: -1.5115, type: 'travel' },
+    { name: 'Madrid, Spain', lat: 40.4168, lon: -3.7038, type: 'travel' },
+    { name: 'Rome, Italy', lat: 41.9028, lon: 12.4964, type: 'travel' },
+    { name: 'Venice, Italy', lat: 45.4408, lon: 12.3155, type: 'travel' },
+    { name: 'Copenhagen, Denmark', lat: 55.6761, lon: 12.5683, type: 'travel' },
+    { name: 'Budapest, Hungary', lat: 47.4979, lon: 19.0402, type: 'travel' },
+    // Asia
+    { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503, type: 'travel' },
   ];
 
   const COLORS = {
