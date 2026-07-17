@@ -27,6 +27,7 @@
     // Canada
     { name: 'Whistler, BC', lat: 50.1163, lon: -122.9574, type: 'travel' },
     { name: 'Vancouver, BC', lat: 49.2827, lon: -123.1207, type: 'travel' },
+    { name: 'Victoria, BC', lat: 48.4284, lon: -123.3656, type: 'travel' },
     { name: 'Phoenix, AZ', lat: 33.4484, lon: -112.0740, type: 'travel' },
     { name: 'New York, NY', lat: 40.7128, lon: -74.0060, type: 'travel' },
     { name: 'Seattle, WA', lat: 47.6062, lon: -122.3321, type: 'travel' },
@@ -34,6 +35,7 @@
     { name: 'Santa Barbara, CA', lat: 34.4208, lon: -119.6982, type: 'travel' },
     { name: 'Palm Springs, CA', lat: 33.8303, lon: -116.5453, type: 'travel' },
     { name: 'Big Sur, CA', lat: 36.2704, lon: -121.8081, type: 'travel' },
+    { name: 'Monterey, CA', lat: 36.6002, lon: -121.8947, type: 'travel' },
     { name: 'Napa, CA', lat: 38.2975, lon: -122.2869, type: 'travel' },
     { name: 'Grand Teton, WY', lat: 43.7904, lon: -110.6818, type: 'travel' },
     { name: 'Washington, DC', lat: 38.9072, lon: -77.0369, type: 'travel' },
