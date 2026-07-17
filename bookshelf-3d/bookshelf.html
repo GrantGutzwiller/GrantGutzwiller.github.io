@@ -587,10 +587,15 @@ function stackEl(list) {
   const stack = document.createElement('div'); stack.className = 'bk-stack';
   // largest book on the bottom, smallest on top (column-reverse → first child = bottom)
   const sorted = [...list].sort((a, b) => (b.h - a.h) || (b.thick - a.thick));
+  const maxW = Math.max(...sorted.map((b) => b.h));
   sorted.forEach((b, k) => {
     const lay = document.createElement('div'); lay.className = 'bk-lay';
+    // hand-piled look: each book a touch shorter/shifted, seeded from its title
+    const hash = [...b.title].reduce((a, c) => a * 31 + c.charCodeAt(0) & 0xffff, 7);
+    const w = b.h - (k === 0 ? 0 : hash % 11);
+    const off = Math.min((hash >> 4) % 7, maxW - w);
     lay.style.cssText = `--sc:${b.spineColor};--tc:${b.textColor};`
-      + `--w:${b.h}px;--lh:${b.thick}px;--off:0px;`;   // all layers flush on the left edge
+      + `--w:${w}px;--lh:${b.thick}px;--off:${off}px;`
     lay.innerHTML = `<div class="bk-lay-in"><div class="le"><span>${esc(b.title)}</span></div><div class="tp"></div><div class="pg"></div></div>`;
     interactive(lay, b); stack.appendChild(lay);
   });
