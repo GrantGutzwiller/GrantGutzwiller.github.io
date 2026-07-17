@@ -2,6 +2,21 @@
    GLOBE PAGE — Stippled globe of travels
    ══════════════════════════════════════════════════════════════════ */
 
+.page-back {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  margin-right: 2rem;
+  transition: color var(--transition-fast);
+}
+
+.page-back:hover {
+  color: var(--accent);
+}
+
 .globe-main {
   flex: 1;
   display: flex;
