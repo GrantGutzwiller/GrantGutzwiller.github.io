@@ -70,7 +70,7 @@ body { background:var(--bg); color:var(--ink); font-family:var(--serif); min-hei
 @keyframes shelfIn { from { opacity:0; transform:translateY(16px);} to { opacity:1; transform:none;} }
 /* ── shared 3D scene: one camera per shelf; the floor and every book live in
    the same preserve-3d space, so books really stand on the shelf ── */
-.shelf-row { position:relative; z-index:2; min-height:210px; padding:16px 4px 0;
+.shelf-row { position:relative; z-index:2; min-height:210px; padding:16px 0 0;
   perspective:1700px; perspective-origin:50% 40%; overflow:visible; }
 .row-track { display:flex; align-items:flex-end; justify-content:flex-start; gap:0; width:max-content;
   transform-style:preserve-3d; position:relative; z-index:2; }

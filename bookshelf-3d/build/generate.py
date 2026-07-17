@@ -21,13 +21,13 @@ BOOKS = [
  ("Famine, Affluence, and Morality","Peter Singer","famine-affluence-morality.jpg","PHIL",False),
  ("The Passion of the Western Mind","Richard Tarnas","passion-western-mind.jpg","PHIL",False),
  ("The Brothers Karamazov","Fyodor Dostoevsky","brothers-karamazov.jpg","LIT",False),
- ("1984","George Orwell","1984.jpg","LIT",False),
  ("The Great Gatsby","F. Scott Fitzgerald","the-great-gatsby.jpg","LIT",True),
  ("Of Mice and Men","John Steinbeck","of-mice-and-men.jpg","LIT",False),
- ("A Farewell to Arms","Ernest Hemingway","a-farewell-to-arms.jpg","LIT",False),
  ("The Road","Cormac McCarthy","the-road.jpg","LIT",False),
+ ("A Farewell to Arms","Ernest Hemingway","a-farewell-to-arms.jpg","LIT",False),
  ("The Book Thief","Markus Zusak","the-book-thief.jpg","LIT",False),
  ("The Night Circus","Erin Morgenstern","the-night-circus.jpg","LIT",False),
+ ("1984","George Orwell","1984.jpg","LIT",False),
  ("All the Light We Cannot See","Anthony Doerr","all-the-light.jpg","LIT",False),
  ("A Man Called Ove","Fredrik Backman","a-man-called-ove.jpg","LIT",False),
  ("Theo of Golden","Allen Levi","theo-of-golden.jpg","LIT",False),
@@ -78,11 +78,11 @@ BOOKS = [
  ("Atomic Habits","James Clear","atomic-habits.jpg","WORLD",False),
  ("Leonardo da Vinci","Walter Isaacson","N96debEB9dwzTOCH5tZ7tWTu4.jpg","WORLD",False),
  ("Who Is Michael Ovitz?","Michael Ovitz","who-is-michael-ovitz.jpg","WORLD",False),
+ ("Why Fish Don't Exist","Lulu Miller","Fish.jpg","WORLD",False),
  ("Sapiens","Yuval Noah Harari","716E6dQ4BXL._AC_UF1000,1000_QL80_.jpg","WORLD",False),
  ("The Operator","Tom King","the-operator.jpg","WORLD",False),
  ("The Coddling of the American Mind","Lukianoff & Haidt","coddling-american-mind.jpg","WORLD",False),
  ("Creative Capital","Spencer E. Ante","hpKFuMWaDHgZbEYf11Gv5XoPs.jpg","WORLD",False),
- ("Why Fish Don't Exist","Lulu Miller","Fish.jpg","WORLD",False),
 ]
 CAT_LABEL={"PHIL":"Philosophy","LIT":"Literature","SCIFI":"Science Fiction","FANT":"Fantasy","WORLD":"The Real World"}
 CAT_ORDER=["PHIL","LIT","SCIFI","FANT","WORLD"]
@@ -90,7 +90,7 @@ CAT_ORDER=["PHIL","LIT","SCIFI","FANT","WORLD"]
 # it into equal shelves, so similar books stay neighbours (like a real shelf)
 # and every shelf comes out the same length.
 SPECTRUM=["PHIL","WORLD","LIT","SCIFI","FANT"]
-NSHELVES=4
+NSHELVES=3
 PAGES={"The Analects":160,"Critique of Pure Reason":800,"Meditations":260,"Beyond Good and Evil":240,
  "Nicomachean Ethics":350,"Ancient Greek Philosophers":400,"The Myth of Sisyphus":210,"Ethics in the Real World":360,
  "Thus Spoke Zarathustra":340,"Famine, Affluence, and Morality":100,"The Passion of the Western Mind":550,
@@ -176,7 +176,7 @@ def geo(t):
 # books turned cover-out (user's picks) — Famine is a thin essay, shown as a stack instead
 FACEOUT={"The Myth of Sisyphus","The Road",
  "The Divine Comedy","Dune","The Player of Games","The Way of Kings",
- "The Shadow of What Was Lost","The Eye of the World","Steve Jobs","Chip War","Why Fish Don't Exist"}
+ "The Shadow of What Was Lost","The Eye of the World","Steve Jobs","Chip War","1984"}
 # books forced into a lying stack regardless of position
 STACK_ME={"Famine, Affluence, and Morality"}
 
@@ -213,7 +213,7 @@ def build_layout(recs,ck):
     MAXSTACK=205
     def stack_run(grp, i, want=5, maxh=MAXSTACK):
         run=[]; j=i; n=len(grp); h=0
-        while j<n and len(run)<want and not grp[j]["favorite"] and not grp[j].get("journal") and (j==i or grp[j]["title"] not in STACK_ME):
+        while j<n and len(run)<want and not grp[j]["favorite"] and not grp[j].get("journal") and grp[j]["title"]!="Why Fish Don't Exist" and (j==i or grp[j]["title"] not in STACK_ME):
             t=grp[j]["thick"]
             if run and h+t>maxh: break
             run.append(grp[j]); h+=t; j+=1
@@ -254,20 +254,19 @@ def build_layout(recs,ck):
     # choose the 3 contiguous cuts that minimise the spread (widest - narrowest),
     # so all four shelves come out ~equal width and each fills the case
     best=None; bestspread=INF
-    for b1 in range(1,N-2):
-        for b2 in range(b1+1,N-1):
-            for b3 in range(b2+1,N):
-                ws=[sw(0,b1,True)+OW[0], sw(b1,b2,False)+OW[1], sw(b2,b3,False)+OW[2], sw(b3,N,False)+OW[3]]
-                sp=max(ws)-min(ws)
-                if sp<bestspread: bestspread=sp; best=(b1,b2,b3)
-    b1,b2,b3=best
-    groups=[ordered[0:b1],ordered[b1:b2],ordered[b2:b3],ordered[b3:N]]
+    for b1 in range(1,N-1):
+        for b2 in range(b1+1,N):
+            ws=[sw(0,b1,True), sw(b1,b2,False), sw(b2,N,False)]
+            sp=max(ws)-min(ws)
+            if sp<bestspread: bestspread=sp; best=(b1,b2)
+    b1,b2=best
+    groups=[ordered[0:b1],ordered[b1:b2],ordered[b2:N]]
     for grp in groups:
         shelves.append({"label":"","slots":layout_slots(grp)})
     # Fill every shelf to the widest shelf's width so the case (width:max-content)
     # reads flush with no empty space on the right. The nudge to spine thickness is
     # a fraction of a pixel per book, so centred titles stay put.
-    SLACK=2
+    SLACK=0
     target=max(group_w(s["slots"]) for s in shelves)
     for s in shelves:
         slots=s["slots"]
