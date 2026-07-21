@@ -2,6 +2,21 @@
    ESSAYS PAGE STYLES
    ══════════════════════════════════════════════════════════════════ */
 
+.page-back {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  margin-right: 2rem;
+  transition: color var(--transition-fast);
+}
+
+.page-back:hover {
+  color: var(--accent);
+}
+
 .essays-main {
   padding: 3.5rem 5rem;
   animation: fadeUp 0.8s 0.2s ease forwards;
