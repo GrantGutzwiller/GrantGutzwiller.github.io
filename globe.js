@@ -50,6 +50,7 @@
     // Americas
     { name: 'Tequisquiapan, Mexico', lat: 20.5211, lon: -99.8951, type: 'travel' },
     { name: 'San José, Costa Rica', lat: 9.9281, lon: -84.0907, type: 'travel' },
+    { name: 'Cusco, Peru', lat: -13.5319, lon: -71.9675, type: 'travel' },
     { name: 'St. George\'s, Grenada', lat: 12.0564, lon: -61.7485, type: 'travel' },
     { name: 'Nassau, Bahamas', lat: 25.0443, lon: -77.3504, type: 'travel' },
     // Europe
@@ -74,12 +75,26 @@
     { name: 'Delphi, Greece', lat: 38.4824, lon: 22.5010, type: 'travel' },
     // Asia
     { name: 'Kyoto, Japan', lat: 35.0116, lon: 135.7681, type: 'travel' },
+    // Yet to explore — from the pin map on the wall
+    { name: 'Oslo, Norway', lat: 59.9139, lon: 10.7522, type: 'future' },
+    { name: 'Stockholm, Sweden', lat: 59.3293, lon: 18.0686, type: 'future' },
+    { name: 'Istanbul, Türkiye', lat: 41.0082, lon: 28.9784, type: 'future' },
+    { name: 'Cairo, Egypt', lat: 30.0444, lon: 31.2357, type: 'future' },
+    { name: 'Dubai, UAE', lat: 25.2048, lon: 55.2708, type: 'future' },
+    { name: 'Mumbai, India', lat: 19.0760, lon: 72.8777, type: 'future' },
+    { name: 'Singapore', lat: 1.3521, lon: 103.8198, type: 'future' },
+    { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503, type: 'future' },
+    { name: 'Cape Town, South Africa', lat: -33.9249, lon: 18.4241, type: 'future' },
+    { name: 'Easter Island, Chile', lat: -27.1127, lon: -109.3497, type: 'future' },
+    { name: 'Antarctica', lat: -63.5, lon: -57.0, type: 'future' },
+    { name: 'Toronto, Canada', lat: 43.6532, lon: -79.3832, type: 'future' },
     { name: 'Hiroshima, Japan', lat: 34.3853, lon: 132.4553, type: 'travel' },
   ];
 
   const COLORS = {
     home: '#c9a227',
     travel: '#c94a2b',
+    future: '#3d5a80',
     land: '#1a1714',
     edge: '#d4cfc9',
   };
@@ -275,7 +290,8 @@
       const r = (p.type === 'home' ? size / 90 : size / 130) * cs * Math.pow(zoom, 0.4);
       ctx.beginPath();
       ctx.arc(sx, sy, r * 2.1, 0, Math.PI * 2);
-      ctx.fillStyle = p.type === 'home' ? 'rgba(201,162,39,0.18)' : 'rgba(201,74,43,0.14)';
+      ctx.fillStyle = p.type === 'home' ? 'rgba(201,162,39,0.18)'
+        : p.type === 'future' ? 'rgba(61,90,128,0.14)' : 'rgba(201,74,43,0.14)';
       ctx.fill();
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
