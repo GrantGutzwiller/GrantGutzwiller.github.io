@@ -24,6 +24,7 @@
     { name: 'Snowbird, UT', lat: 40.5830, lon: -111.6538, type: 'travel' },
     { name: 'Alta, UT', lat: 40.5884, lon: -111.6386, type: 'travel' },
     { name: 'Jackson Hole, WY', lat: 43.5875, lon: -110.8279, type: 'travel' },
+    { name: 'Big Sky, MT', lat: 45.2618, lon: -111.3080, type: 'travel' },
     // Canada
     { name: 'Whistler, BC', lat: 50.1163, lon: -122.9574, type: 'travel' },
     { name: 'Vancouver, BC', lat: 49.2827, lon: -123.1207, type: 'travel' },
@@ -47,6 +48,7 @@
     { name: 'Boston, MA', lat: 42.3601, lon: -71.0589, type: 'travel' },
     { name: 'Chicago, IL', lat: 41.8781, lon: -87.6298, type: 'travel' },
     { name: 'St. Louis, MO', lat: 38.6270, lon: -90.1994, type: 'travel' },
+    { name: 'Bloomington, IN', lat: 39.1653, lon: -86.5264, type: 'travel' },
     { name: 'New Orleans, LA', lat: 29.9511, lon: -90.0715, type: 'travel' },
     { name: 'Port St. Joe, FL', lat: 29.8119, lon: -85.3030, type: 'travel' },
     { name: 'Juneau, AK', lat: 58.3019, lon: -134.4197, type: 'travel' },
@@ -68,6 +70,7 @@
     { name: 'Chamonix, France', lat: 45.9237, lon: 6.8694, type: 'travel' },
     { name: 'Mont Saint-Michel, France', lat: 48.6361, lon: -1.5115, type: 'travel' },
     { name: 'Madrid, Spain', lat: 40.4168, lon: -3.7038, type: 'travel' },
+    { name: 'Granada, Spain', lat: 37.1773, lon: -3.5986, type: 'travel' },
     { name: 'Lisbon, Portugal', lat: 38.7223, lon: -9.1393, type: 'travel' },
     { name: 'Barcelona, Spain', lat: 41.3874, lon: 2.1686, type: 'travel' },
     { name: 'Rome, Italy', lat: 41.9028, lon: 12.4964, type: 'travel' },
