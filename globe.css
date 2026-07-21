@@ -97,10 +97,6 @@
   background: var(--accent);
 }
 
-.legend-dot-future {
-  background: #3d5a80;
-}
-
 .legend-hint {
   color: var(--ink-faint);
 }

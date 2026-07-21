@@ -29,6 +29,8 @@
     { name: 'Vancouver, BC', lat: 49.2827, lon: -123.1207, type: 'travel' },
     { name: 'Victoria, BC', lat: 48.4284, lon: -123.3656, type: 'travel' },
     { name: 'Phoenix, AZ', lat: 33.4484, lon: -112.0740, type: 'travel' },
+    { name: 'Las Vegas, NV', lat: 36.1699, lon: -115.1398, type: 'travel' },
+    { name: 'Santa Fe, NM', lat: 35.6870, lon: -105.9378, type: 'travel' },
     { name: 'Salt Lake City, UT', lat: 40.7608, lon: -111.8910, type: 'travel' },
     { name: 'Portland, OR', lat: 45.5152, lon: -122.6784, type: 'travel' },
     { name: 'Aspen, CO', lat: 39.1911, lon: -106.8175, type: 'travel' },
@@ -44,13 +46,19 @@
     { name: 'Washington, DC', lat: 38.9072, lon: -77.0369, type: 'travel' },
     { name: 'Boston, MA', lat: 42.3601, lon: -71.0589, type: 'travel' },
     { name: 'Chicago, IL', lat: 41.8781, lon: -87.6298, type: 'travel' },
+    { name: 'St. Louis, MO', lat: 38.6270, lon: -90.1994, type: 'travel' },
+    { name: 'New Orleans, LA', lat: 29.9511, lon: -90.0715, type: 'travel' },
+    { name: 'Port St. Joe, FL', lat: 29.8119, lon: -85.3030, type: 'travel' },
     { name: 'Juneau, AK', lat: 58.3019, lon: -134.4197, type: 'travel' },
+    { name: 'Sitka, AK', lat: 57.0531, lon: -135.3300, type: 'travel' },
     { name: 'Kona, Big Island, HI', lat: 19.6400, lon: -155.9969, type: 'travel' },
     { name: 'Lahaina, Maui, HI', lat: 20.8783, lon: -156.6825, type: 'travel' },
     // Americas
     { name: 'Tequisquiapan, Mexico', lat: 20.5211, lon: -99.8951, type: 'travel' },
     { name: 'San José, Costa Rica', lat: 9.9281, lon: -84.0907, type: 'travel' },
+    { name: 'Belize City, Belize', lat: 17.5046, lon: -88.1962, type: 'travel' },
     { name: 'Cusco, Peru', lat: -13.5319, lon: -71.9675, type: 'travel' },
+    { name: 'Machu Picchu, Peru', lat: -13.1631, lon: -72.5450, type: 'travel' },
     { name: 'St. George\'s, Grenada', lat: 12.0564, lon: -61.7485, type: 'travel' },
     { name: 'Nassau, Bahamas', lat: 25.0443, lon: -77.3504, type: 'travel' },
     // Europe
@@ -60,6 +68,7 @@
     { name: 'Chamonix, France', lat: 45.9237, lon: 6.8694, type: 'travel' },
     { name: 'Mont Saint-Michel, France', lat: 48.6361, lon: -1.5115, type: 'travel' },
     { name: 'Madrid, Spain', lat: 40.4168, lon: -3.7038, type: 'travel' },
+    { name: 'Lisbon, Portugal', lat: 38.7223, lon: -9.1393, type: 'travel' },
     { name: 'Barcelona, Spain', lat: 41.3874, lon: 2.1686, type: 'travel' },
     { name: 'Rome, Italy', lat: 41.9028, lon: 12.4964, type: 'travel' },
     { name: 'Venice, Italy', lat: 45.4408, lon: 12.3155, type: 'travel' },
@@ -75,26 +84,12 @@
     { name: 'Delphi, Greece', lat: 38.4824, lon: 22.5010, type: 'travel' },
     // Asia
     { name: 'Kyoto, Japan', lat: 35.0116, lon: 135.7681, type: 'travel' },
-    // Yet to explore — from the pin map on the wall
-    { name: 'Oslo, Norway', lat: 59.9139, lon: 10.7522, type: 'future' },
-    { name: 'Stockholm, Sweden', lat: 59.3293, lon: 18.0686, type: 'future' },
-    { name: 'Istanbul, Türkiye', lat: 41.0082, lon: 28.9784, type: 'future' },
-    { name: 'Cairo, Egypt', lat: 30.0444, lon: 31.2357, type: 'future' },
-    { name: 'Dubai, UAE', lat: 25.2048, lon: 55.2708, type: 'future' },
-    { name: 'Mumbai, India', lat: 19.0760, lon: 72.8777, type: 'future' },
-    { name: 'Singapore', lat: 1.3521, lon: 103.8198, type: 'future' },
-    { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503, type: 'future' },
-    { name: 'Cape Town, South Africa', lat: -33.9249, lon: 18.4241, type: 'future' },
-    { name: 'Easter Island, Chile', lat: -27.1127, lon: -109.3497, type: 'future' },
-    { name: 'Antarctica', lat: -63.5, lon: -57.0, type: 'future' },
-    { name: 'Toronto, Canada', lat: 43.6532, lon: -79.3832, type: 'future' },
     { name: 'Hiroshima, Japan', lat: 34.3853, lon: 132.4553, type: 'travel' },
   ];
 
   const COLORS = {
     home: '#c9a227',
     travel: '#c94a2b',
-    future: '#3d5a80',
     land: '#1a1714',
     edge: '#d4cfc9',
   };
@@ -290,8 +285,7 @@
       const r = (p.type === 'home' ? size / 90 : size / 130) * cs * Math.pow(zoom, 0.4);
       ctx.beginPath();
       ctx.arc(sx, sy, r * 2.1, 0, Math.PI * 2);
-      ctx.fillStyle = p.type === 'home' ? 'rgba(201,162,39,0.18)'
-        : p.type === 'future' ? 'rgba(61,90,128,0.14)' : 'rgba(201,74,43,0.14)';
+      ctx.fillStyle = p.type === 'home' ? 'rgba(201,162,39,0.18)' : 'rgba(201,74,43,0.14)';
       ctx.fill();
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
