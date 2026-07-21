@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>404 — Grant Gutzwiller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Mono:wght@300;400&display=swap');</style>
+</head>
+<body>
+<style>
+:root { --paper:#f5f2ec; --ink:#1a1714; --muted:#6b6560; --faint:#b5b0aa; --rule:#d4cfc9; --accent:#c94a2b;
+  --mono:'DM Mono', ui-monospace, 'Courier New', monospace; }
+body { background:var(--paper); margin:0; min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2vh 0; }
+.controls { display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center;
+  font-family:var(--mono); font-size:0.66rem; letter-spacing:0.13em; margin:0 1rem 1rem; }
+.controls button { all:unset; cursor:pointer; color:var(--muted); padding:0.25rem 0.05rem;
+  border-bottom:1px solid transparent; }
+.controls button:hover { color:var(--ink); }
+.controls button.on { color:var(--ink); border-bottom-color:var(--accent); }
+.controls .grp { display:flex; gap:0.9rem; }
+.controls .sep { color:var(--rule); }
+.frame { width:min(88vw, 52vh, 460px); border:1px solid var(--rule); padding:8px; background:var(--paper); }
+.fourofour { text-align:center; margin-bottom:1.1rem; }
+.fourofour .num { font-family:Georgia, 'Times New Roman', serif; font-size:4.4rem; font-weight:600;
+  letter-spacing:0.06em; line-height:1; color:var(--ink); }
+.fourofour .line { font-family:var(--mono); font-size:0.64rem; letter-spacing:0.22em; color:var(--muted); margin-top:0.7rem; }
+.cap a:hover { color:var(--accent) !important; }
+canvas { width:100%; display:block; }
+.cap { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.13em;
+  color:var(--faint); margin:0.9rem 1rem 0.4rem; text-align:center; }
+</style>
+<div class="fourofour">
+  <div class="num">404</div>
+  <div class="line">THE TRAIL GOES COLD HERE</div>
+</div>
+<div class="frame"><canvas id="c"></canvas></div>
+<p class="cap"><a href="/" style="color:inherit; text-decoration:none">&larr; BACK TO THE CLEARING</a></p>
+<script>
+(async function () {
+  const W = 1160, H = 1450, DPR = 1.6;
+  const canvas = document.getElementById('c');
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  const ctx = canvas.getContext('2d');
+  let s = 137;
+  const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+
+  const loadImg = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.src = src; });
+  const [dimg, fernImg, barkImg, mossImg] = await Promise.all([
+    loadImg('/404-assets/stag.png'),
+    loadImg('/404-assets/fern.png'),
+    loadImg('/404-assets/bark.jpg'),
+    loadImg('/404-assets/moss.jpg'),
+  ]);
+
+  // ── palettes: three seasons of the same clearing ──
+  const PALETTES = {
+    summer: { bg: ['#0f1a14', '#1e3028', '#42553d', '#2b3a24', '#131c12'],
+      fog: '214,218,196', beam: '250,241,210', pool: '240,222,182',
+      canopy: ['#0d1710', '#16281c', '#20331d'],
+      trunkA: ['#0c120c', '#26332a', '#5a6b42'], trunkB: ['#6b7a4a', '#233022', '#0b110c'], trunkC: ['#121b12', '#2f4028', '#74824c'],
+      moss: ['#3c6152', '#4c6b3c', '#2e4a3e'], vine: '#2f4526', vineLeaf: '#44633a',
+      under: ['#27402c', '#375233', '#1f331f'], tuft: '#2c4426',
+      fernFilter: 'none', mossFilter: 'none',
+      deerDark: [24, 15, 10], deerLight: [238, 192, 120], mote: '#c9a227', moteFall: false },
+    autumn: { bg: ['#1c150c', '#2e2312', '#5a4a28', '#3c2d16', '#191207'],
+      fog: '226,208,180', beam: '252,238,196', pool: '238,208,150',
+      canopy: ['#1e150a', '#2c1e0e', '#3a2a12'],
+      trunkA: ['#140f08', '#332818', '#6b5230'], trunkB: ['#7a5e32', '#2e2312', '#120d07'], trunkC: ['#1a1309', '#403016', '#82683a'],
+      moss: ['#6b5a2e', '#7a4e28', '#4c3c1e'], vine: '#4c3a1a', vineLeaf: '#6b4e24',
+      under: ['#402e16', '#523c1e', '#301f10'], tuft: '#443112',
+      fernFilter: 'sepia(0.65) saturate(1.35) hue-rotate(-12deg) brightness(1.08)',
+      mossFilter: 'sepia(0.5) saturate(1.2) hue-rotate(-18deg)',
+      deerDark: [26, 13, 7], deerLight: [242, 174, 92], mote: '#c98a27', moteFall: false },
+    snow: { bg: ['#232e30', '#314042', '#5c6c6a', '#46544f', '#28322f'],
+      fog: '236,240,242', beam: '251,251,247', pool: '240,242,242',
+      canopy: ['#182320', '#22322d', '#2c3d38'],
+      trunkA: ['#131a18', '#2c3a36', '#5e6c62'], trunkB: ['#68766b', '#2a3833', '#121917'], trunkC: ['#182220', '#364643', '#788679'],
+      moss: ['#5d7573', '#6d8577', '#4c605e'], vine: '#41565d', vineLeaf: '#576d6e',
+      under: ['#3a4a48', '#4a5c58', '#2e3c3a'], tuft: '#44585a',
+      fernFilter: 'saturate(0.25) brightness(1.45) hue-rotate(150deg)',
+      mossFilter: 'saturate(0.3) brightness(1.3) hue-rotate(150deg)',
+      deerDark: [22, 17, 14], deerLight: [228, 216, 198], mote: '#e8e6df', moteFall: true },
+  };
+
+  const opts = { mode: 'snow', light: 'contre', seed: 137 };
+
+  // ── the stag, re-inked per palette and lighting ──
+  const dc = document.createElement('canvas'); dc.width = dimg.width; dc.height = dimg.height;
+  const dctx = dc.getContext('2d', { willReadFrequently: true });
+  function tintDeer(P, light) {
+    dctx.clearRect(0, 0, dc.width, dc.height);
+    dctx.drawImage(dimg, 0, 0);
+    const dd = dctx.getImageData(0, 0, dc.width, dc.height);
+    const A = dd.data, DWd = dc.width;
+    const alpha = (x, y) => (x < 0 || y < 0 || x >= DWd || y >= dc.height) ? 0 : A[(y * DWd + x) * 4 + 3];
+    for (let i = 0; i < A.length; i += 4) {
+      const a = A[i + 3];
+      if (a < 40) { A[i + 3] = 0; continue; }
+      const L = (0.299 * A[i] + 0.587 * A[i + 1] + 0.114 * A[i + 2]) / 255;
+      const px = (i / 4) % DWd, py = ((i / 4) / DWd) | 0;
+      let t;
+      if (light === 'sunlit') {
+        t = Math.pow(L, 0.8) + 0.22 * (px / DWd) - 0.06;
+      } else {                                           // contre-jour: dark mass, burning rim
+        t = Math.pow(L, 0.9) * 0.3;
+        if (alpha(px + 4, py - 3) < 40 || alpha(px + 3, py - 4) < 40) t = 0.98;   // rim toward the shaft
+        else if (alpha(px + 7, py - 5) < 40) t = 0.55;
+      }
+      t = Math.max(0, Math.min(1, t));
+      A[i] = P.deerDark[0] + t * (P.deerLight[0] - P.deerDark[0]);
+      A[i + 1] = P.deerDark[1] + t * (P.deerLight[1] - P.deerDark[1]);
+      A[i + 2] = P.deerDark[2] + t * (P.deerLight[2] - P.deerDark[2]);
+    }
+    dctx.putImageData(dd, 0, 0);
+  }
+
+  // ── scene + depth painted side by side ──
+  const off = document.createElement('canvas'); off.width = W; off.height = H;
+  const g = off.getContext('2d', { willReadFrequently: true });
+  const dep = document.createElement('canvas'); dep.width = W; dep.height = H;
+  const dg2 = dep.getContext('2d', { willReadFrequently: true });
+  let scene, depth, deerA;
+  const DX = 505;
+  const DSC = 0.68, DW2 = dimg.width * DSC, DH2 = dimg.height * DSC;
+  const DXL = DX - DW2 * 0.5, DYT = H * 0.962 - DH2;
+
+  function blobs(gc, x, y, r, n, col, spread, ysp) {
+    gc.fillStyle = col;
+    const vy = ysp !== undefined ? ysp : spread * 0.7;
+    for (let i = 0; i < n; i++) {
+      gc.beginPath();
+      gc.arc(x + (rnd() - 0.5) * spread, y + (rnd() - 0.5) * vy, r * (0.5 + rnd() * 0.8), 0, Math.PI * 2);
+      gc.fill();
+    }
+  }
+  function trunkPath(cg, x, w, lean) {
+    cg.beginPath();
+    cg.moveTo(x - w + lean * 0.2, -60);
+    cg.bezierCurveTo(x - w * 0.8, H * 0.3, x - w * 1.25 - lean, H * 0.75, x - w * 1.55 - lean, H + 60);
+    cg.lineTo(x + w * 1.55 - lean, H + 60);
+    cg.bezierCurveTo(x + w * 1.25 - lean, H * 0.75, x + w * 0.8, H * 0.3, x + w + lean * 0.2, -60);
+    cg.closePath();
+  }
+  function paintScene(P) {
+    s = opts.seed;
+    // depth: 255 = far, 0 = near
+    dg2.fillStyle = 'rgb(128,128,128)'; dg2.fillRect(0, 0, W, H);
+    const dfog = dg2.createLinearGradient(0, H * 0.34, 0, H * 0.8);
+    dfog.addColorStop(0, 'rgba(225,225,225,0)'); dfog.addColorStop(0.35, 'rgba(225,225,225,1)');
+    dfog.addColorStop(0.72, 'rgba(225,225,225,1)'); dfog.addColorStop(1, 'rgba(225,225,225,0)');
+    dg2.fillStyle = dfog; dg2.fillRect(0, H * 0.3, W, H * 0.55);
+    const dtop = dg2.createLinearGradient(0, 0, 0, H * 0.2);
+    dtop.addColorStop(0, 'rgba(160,160,160,1)'); dtop.addColorStop(1, 'rgba(160,160,160,0)');
+    dg2.fillStyle = dtop; dg2.fillRect(0, 0, W, H * 0.2);
+    // scene
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    [[0, 0], [0.32, 1], [0.62, 2], [0.85, 3], [1, 4]].forEach(([st, i]) => bg.addColorStop(st, P.bg[i]));
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const fog = g.createLinearGradient(0, H * 0.42, 0, H * 0.72);
+    fog.addColorStop(0, `rgba(${P.fog},0)`); fog.addColorStop(0.5, `rgba(${P.fog},0.36)`); fog.addColorStop(1, `rgba(${P.fog},0)`);
+    g.fillStyle = fog; g.fillRect(0, H * 0.42, W, H * 0.3);
+    for (const [x, w] of [[190, 13], [372, 9], [705, 11], [905, 8], [1060, 12], [530, 7]]) {
+      g.fillStyle = `rgba(${P.fog},0.4)`; g.fillRect(x - w, H * 0.30, w * 2, H * 0.55);
+      dg2.fillStyle = 'rgb(238,238,238)'; dg2.fillRect(x - w, H * 0.30, w * 2, H * 0.55);
+    }
+    for (let i = 0; i < 26; i++)
+      blobs(g, rnd() * W, rnd() * H * 0.13, 26 + rnd() * 40, 5, P.canopy[(rnd() * 3) | 0], 130);
+    // the shaft
+    g.save(); g.beginPath();
+    g.moveTo(W * 0.72, -40); g.lineTo(W * 1.02, -40); g.lineTo(W * 0.66, H * 0.92); g.lineTo(W * 0.22, H * 0.92);
+    g.closePath();
+    const beam = g.createLinearGradient(W * 0.85, 0, W * 0.4, H * 0.9);
+    beam.addColorStop(0, `rgba(${P.beam},0.95)`); beam.addColorStop(0.55, `rgba(${P.beam},0.72)`); beam.addColorStop(1, `rgba(${P.beam},0.28)`);
+    g.fillStyle = beam; g.fill(); g.restore();
+    // trunks (+ near/mid depth), bark laid in
+    const trunks = [[105, 74, 14, P.trunkA, 30], [1040, 88, -18, P.trunkB, 30], [430, 34, 6, P.trunkC, 95]];
+    for (const [x, w, lean, tones, dv] of trunks) {
+      const grad = g.createLinearGradient(x - w, 0, x + w, 0);
+      grad.addColorStop(0, tones[0]); grad.addColorStop(0.55, tones[1]); grad.addColorStop(1, tones[2]);
+      g.fillStyle = grad; trunkPath(g, x, w, lean); g.fill();
+      dg2.fillStyle = `rgb(${dv},${dv},${dv})`; trunkPath(dg2, x, w, lean); dg2.fill();
+      g.strokeStyle = 'rgba(12,16,10,0.5)'; g.lineWidth = 2.2;
+      for (let i = 0; i < 26; i++) {
+        const t = rnd(), sx = x - w + rnd() * 2 * w, len = 60 + rnd() * 200;
+        g.globalAlpha = 0.18 + rnd() * 0.3;
+        g.beginPath(); g.moveTo(sx, t * H);
+        g.quadraticCurveTo(sx - 6 - lean * t, t * H + len / 2, sx - 2 - lean * t * 2, t * H + len); g.stroke();
+      }
+      g.globalAlpha = 1;
+      g.save(); trunkPath(g, x, w, lean); g.clip();
+      g.globalCompositeOperation = 'overlay'; g.globalAlpha = 0.55;
+      let flip = false;
+      for (let ty = -60; ty < H + 60; ty += 288) {   // mirror alternate tiles: seams meet their own reflection
+        const bx = x - w * 1.75 - lean * ((ty + 60) / H);
+        if (flip) { g.save(); g.translate(bx, ty + 320); g.scale(1, -1);
+          g.drawImage(barkImg, 0, 0, w * 3.5, 320); g.restore(); }
+        else g.drawImage(barkImg, bx, ty, w * 3.5, 320);
+        flip = !flip;
+      }
+      g.restore(); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < 34; i++) {
+        const my = H * 0.3 + rnd() * H * 0.45;
+        blobs(g, x - w * 0.85 - lean * (my / H) + rnd() * w * 0.45, my, 7 + rnd() * 12, 3, P.moss[(rnd() * 3) | 0], 26);
+      }
+      blobs(g, x - lean, H - 40, 20, 14, P.moss[0], w * 2.6, 60);
+    }
+    // vines
+    for (const [x0, drop, sway] of [[300, 420, 0.6], [540, 300, 2.1], [770, 500, 1.2], [950, 330, 3.4], [200, 560, 4.2]]) {
+      g.strokeStyle = P.vine; g.lineWidth = 3;
+      g.beginPath(); g.moveTo(x0, -10);
+      for (let y = 0; y < drop; y += 30) g.lineTo(x0 + Math.sin(y / 90 + sway) * 26, y);
+      g.stroke();
+      for (let y = 20; y < drop; y += 26 + rnd() * 22)
+        blobs(g, x0 + Math.sin(y / 90 + sway) * 26 + (rnd() - 0.5) * 10, y, 5 + rnd() * 5, 3, P.vineLeaf, 16);
+    }
+    // understory
+    blobs(g, W * 0.5, H * 0.97, 30, 40, P.under[0], W, 70);
+    blobs(g, W * 0.25, H * 0.93, 24, 22, P.under[1], W * 0.5, 60);
+    blobs(g, W * 0.8, H * 0.95, 26, 22, P.under[2], W * 0.5, 60);
+    dg2.fillStyle = 'rgb(55,55,55)'; dg2.fillRect(0, H * 0.885, W, H * 0.13);
+    // herbarium ferns
+    const plant = (x, y, sc2, rot, flip, alpha) => {
+      g.save(); g.translate(x, y); g.rotate(rot); g.scale(flip ? -sc2 : sc2, sc2);
+      g.globalAlpha = alpha; g.filter = P.fernFilter;
+      g.drawImage(fernImg, -fernImg.width / 2, -fernImg.height);
+      g.filter = 'none'; g.restore(); g.globalAlpha = 1;
+    };
+    plant(330, H * 0.925, 0.5, -0.12, false, 0.95);
+    plant(845, H * 0.918, 0.44, 0.14, true, 0.95);
+    plant(660, H * 0.955, 0.3, 0.05, false, 0.85);
+    plant(105, H * 0.95, 0.36, 0.2, true, 0.9);
+    // fallen log
+    g.save(); g.translate(150, H * 0.925); g.rotate(-0.06);
+    const lg = g.createLinearGradient(0, -30, 0, 30);
+    lg.addColorStop(0, P.under[1]); lg.addColorStop(0.5, P.canopy[1]); lg.addColorStop(1, P.canopy[0]);
+    g.fillStyle = lg; g.fillRect(-140, -26, 300, 52);
+    g.beginPath(); g.ellipse(160, 0, 13, 26, 0, 0, Math.PI * 2); g.fillStyle = P.canopy[2]; g.fill();
+    g.restore();
+    blobs(g, 130, H * 0.905, 9, 26, P.moss[1], 260, 24);
+    // moss texture across the floor
+    g.save(); g.globalCompositeOperation = 'overlay'; g.globalAlpha = 0.5; g.filter = P.mossFilter;
+    for (let tx = 0; tx < W; tx += 400) g.drawImage(mossImg, tx, H * 0.9, 420, H * 0.1 + 10);
+    g.restore(); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.filter = 'none';
+    const gnd = g.createLinearGradient(0, H * 0.9, 0, H);
+    gnd.addColorStop(0, 'rgba(9,13,8,0)'); gnd.addColorStop(1, 'rgba(9,13,8,0.8)');
+    g.fillStyle = gnd; g.fillRect(0, H * 0.9, W, H * 0.1);
+    // pool + dapples
+    g.save(); g.beginPath(); g.ellipse(DX + 10, H * 0.933, 300, 54, 0, 0, Math.PI * 2);
+    const pool = g.createRadialGradient(DX + 10, H * 0.933, 20, DX + 10, H * 0.933, 300);
+    pool.addColorStop(0, `rgba(${P.pool},0.9)`); pool.addColorStop(0.6, `rgba(${P.pool},0.42)`); pool.addColorStop(1, `rgba(${P.pool},0)`);
+    g.fillStyle = pool; g.fill(); g.restore();
+    g.save(); g.globalCompositeOperation = 'screen';
+    const dap = (x, y, rx, ry, a, rot) => { g.save(); g.translate(x, y); g.rotate(rot || 0);
+      const dgr = g.createRadialGradient(0, 0, 2, 0, 0, rx);
+      dgr.addColorStop(0, `rgba(${P.beam},${a})`); dgr.addColorStop(1, `rgba(${P.beam},0)`);
+      g.scale(1, ry / rx); g.fillStyle = dgr; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.fill(); g.restore(); };
+    dap(268, H * 0.895, 64, 18, 0.5); dap(778, H * 0.915, 78, 20, 0.55);
+    dap(902, H * 0.868, 44, 13, 0.4); dap(150, H * 0.905, 40, 12, 0.35);
+    dap(958, H * 0.5, 60, 150, 0.22, -0.18);            // one climbing the right trunk
+    g.restore();
+    // contact shadow + the stag
+    g.save(); g.beginPath(); g.ellipse(DX + 6, H * 0.955, DW2 * 0.46, 20, 0, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(10,8,5,0.4)'; g.filter = 'blur(6px)'; g.fill(); g.restore(); g.filter = 'none';
+    g.drawImage(dc, DXL, DYT, DW2, DH2);
+    blobs(g, DX, H * 0.965, 8, 22, P.tuft, DW2 * 0.9, 22);
+    // two companions crossing the beam
+    g.strokeStyle = 'rgba(16,18,12,0.85)'; g.lineWidth = 3.4; g.lineCap = 'round';
+    const bird = (x, y, k) => { g.beginPath(); g.moveTo(x - 9 * k, y - 2 * k);
+      g.quadraticCurveTo(x - 3 * k, y - 7 * k, x, y);
+      g.quadraticCurveTo(x + 3 * k, y - 7 * k, x + 9 * k, y - 2 * k); g.stroke(); };
+    bird(592, 300, 1); bird(650, 352, 0.75);
+    dg2.fillStyle = 'rgb(20,20,20)';
+    dg2.fillRect(578, 288, 30, 18); dg2.fillRect(640, 342, 22, 14);
+    // repoussoir branch
+    g.strokeStyle = P.canopy[0]; g.lineCap = 'round';
+    g.lineWidth = 17; g.beginPath(); g.moveTo(-30, 120); g.bezierCurveTo(180, 90, 330, 150, 470, 118); g.stroke();
+    g.lineWidth = 9;
+    g.beginPath(); g.moveTo(300, 128); g.bezierCurveTo(360, 170, 420, 190, 500, 196); g.stroke();
+    g.beginPath(); g.moveTo(150, 104); g.bezierCurveTo(210, 60, 260, 44, 330, 40); g.stroke();
+    for (let i = 0; i < 26; i++)
+      blobs(g, 90 + rnd() * 420, 60 + rnd() * 150, 9 + rnd() * 11, 4, P.canopy[(rnd() * 2) | 0], 60);
+    dg2.strokeStyle = 'rgb(15,15,15)'; dg2.lineCap = 'round';
+    dg2.lineWidth = 30; dg2.beginPath(); dg2.moveTo(-30, 120); dg2.bezierCurveTo(180, 90, 330, 150, 470, 118); dg2.stroke();
+    dg2.lineWidth = 20;
+    dg2.beginPath(); dg2.moveTo(300, 128); dg2.bezierCurveTo(360, 170, 420, 190, 500, 196); dg2.stroke();
+    dg2.beginPath(); dg2.moveTo(150, 104); dg2.bezierCurveTo(210, 60, 260, 44, 330, 40); dg2.stroke();
+    // vignette
+    const vg = g.createRadialGradient(W * 0.52, H * 0.52, H * 0.36, W * 0.52, H * 0.52, H * 0.78);
+    vg.addColorStop(0, 'rgba(8,12,8,0)'); vg.addColorStop(1, 'rgba(8,12,8,0.42)');
+    g.fillStyle = vg; g.fillRect(0, 0, W, H);
+    scene = g.getImageData(0, 0, W, H).data;
+    depth = dg2.getImageData(0, 0, W, H).data;
+    const dm = document.createElement('canvas'); dm.width = W; dm.height = H;
+    const dmc = dm.getContext('2d', { willReadFrequently: true });
+    dmc.drawImage(dc, DXL, DYT, DW2, DH2);
+    deerA = dmc.getImageData(0, 0, W, H).data;
+  }
+
+  // ── the marks ──
+  let dots = [];
+  const alphaAt = (m, x, y) => m[(((y | 0) * W + (x | 0)) * 4) + 3];
+  const lumAt = (xx, yy) => { const ii = ((yy | 0) * W + (xx | 0)) * 4;
+    return 0.299 * scene[ii] + 0.587 * scene[ii + 1] + 0.114 * scene[ii + 2]; };
+  function buildDots() {
+    dots = [];
+    const step = 4.35;
+    for (let gy = 2; gy < H; gy += step) {
+      for (let gx = 2; gx < W; gx += step) {
+        const x = gx + (rnd() - 0.5) * 3.8, y = gy + (rnd() - 0.5) * 3.8;
+        if (x < 3 || y < 3 || x >= W - 3 || y >= H - 3) continue;
+        const i = ((y | 0) * W + (x | 0)) * 4;
+        const r = scene[i], gr2 = scene[i + 1], b = scene[i + 2];
+        const dark = 1 - (0.299 * r + 0.587 * gr2 + 0.114 * b) / 255;
+        const isDeer = alphaAt(deerA, x, y) > 0;
+        const dpt = isDeer ? 0.06 : depth[i] / 255;      // 0 near … 1 far
+        let p = (dark * 1.42 + (isDeer ? 0.3 : 0)) * (1 - 0.4 * dpt);
+        if (dark < 0.05) p = 0.015;
+        if (rnd() > p) continue;
+        const t = Math.min(1, dark * 1.15);
+        const mix = (c, k2) => Math.round(c * (1 - k2) + 24 * k2);
+        const col = `rgb(${mix(r, t * 0.35)},${mix(gr2, t * 0.3)},${mix(b, t * 0.35)})`;
+        let kind = 0, ang = 0;
+        if (isDeer) {
+          kind = 1;
+          const d4 = 3;
+          const mgx = alphaAt(deerA, x + d4, y) - alphaAt(deerA, x - d4, y);
+          const mgy = alphaAt(deerA, x, y + d4) - alphaAt(deerA, x, y - d4);
+          if (Math.abs(mgx) + Math.abs(mgy) > 60) ang = Math.atan2(mgy, mgx) + Math.PI / 2;
+          else {
+            const lgx = lumAt(x + d4, y) - lumAt(x - d4, y);
+            const lgy = lumAt(x, y + d4) - lumAt(x, y - d4);
+            ang = (Math.abs(lgx) + Math.abs(lgy) > 9) ? Math.atan2(lgy, lgx) + Math.PI / 2 : -0.2 + (rnd() - 0.5) * 0.4;
+          }
+        } else if (dpt < 0.45 && ((x > 31 && x < 179) || (x > 396 && x < 464) || (x > 952 && x < 1128))) {
+          kind = 1; ang = Math.PI / 2 + (x < W / 2 ? 0.05 : -0.06) + (rnd() - 0.5) * 0.22;   // bark grain
+        } else if (y > H * 0.9 && Math.abs(x - DX) < 340 && dark < 0.5) {
+          kind = 1; ang = (rnd() - 0.5) * 0.4;
+        }
+        dots.push({ x, y, kind, ang,
+          r: (0.8 + dark * 1.9 + (isDeer ? 0.1 : 0)) * (1 - 0.42 * dpt),
+          a: (0.34 + dark * 0.6) * (1 - 0.4 * dpt), c: col });
+      }
+    }
+    // finer pass over the stag
+    for (let gy = DYT; gy < DYT + DH2; gy += 2.7) {
+      for (let gx = DXL; gx < DXL + DW2; gx += 2.7) {
+        const x = gx + (rnd() - 0.5) * 2.4, y = gy + (rnd() - 0.5) * 2.4;
+        if (x < 3 || y < 3 || x >= W - 3 || y >= H - 3) continue;
+        if (alphaAt(deerA, x, y) === 0) continue;
+        const i = ((y | 0) * W + (x | 0)) * 4;
+        const r = scene[i], gr2 = scene[i + 1], b = scene[i + 2];
+        const dark = 1 - (0.299 * r + 0.587 * gr2 + 0.114 * b) / 255;
+        if (rnd() > dark * 0.85 + 0.06) continue;
+        const lgx = lumAt(x + 3, y) - lumAt(x - 3, y), lgy = lumAt(x, y + 3) - lumAt(x, y - 3);
+        const ang = (Math.abs(lgx) + Math.abs(lgy) > 9) ? Math.atan2(lgy, lgx) + Math.PI / 2 : -0.2 + (rnd() - 0.5) * 0.4;
+        const t = Math.min(1, dark * 1.15);
+        const mix = (c, k2) => Math.round(c * (1 - k2) + 24 * k2);
+        dots.push({ x, y, kind: 1, ang, r: 0.55 + dark * 1.3, a: 0.26 + dark * 0.5,
+          c: `rgb(${mix(r, t * 0.3)},${mix(gr2, t * 0.25)},${mix(b, t * 0.3)})` });
+      }
+    }
+    for (let i = dots.length - 1; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [dots[i], dots[j]] = [dots[j], dots[i]]; }
+  }
+
+  // ── plate + animation ──
+  const plate = document.createElement('canvas');
+  plate.width = canvas.width; plate.height = canvas.height;
+  const pctx = plate.getContext('2d');
+  let drawn = 0, t0 = 0, motes = [];
+  function drawDotsInto(c2, sc2, from, upTo) {
+    c2.setTransform(sc2, 0, 0, sc2, 0, 0); c2.lineCap = 'round';
+    for (let k = from; k < upTo; k++) {
+      const d = dots[k];
+      c2.globalAlpha = d.a;
+      if (d.kind === 1) {
+        c2.strokeStyle = d.c; c2.lineWidth = d.r * 1.1;
+        const L = d.r * 2.6, dx2 = Math.cos(d.ang) * L / 2, dy2 = Math.sin(d.ang) * L / 2;
+        c2.beginPath(); c2.moveTo(d.x - dx2, d.y - dy2); c2.lineTo(d.x + dx2, d.y + dy2); c2.stroke();
+      } else {
+        c2.fillStyle = d.c;
+        c2.beginPath(); c2.arc(d.x, d.y, d.r, 0, Math.PI * 2); c2.fill();
+      }
+    }
+    c2.globalAlpha = 1;
+  }
+  function makeMotes(P) {
+    motes = [];
+    for (let i = 0; i < 46; i++) {
+      const t = rnd();
+      motes.push({ bx: P.moteFall ? rnd() * W : W * (0.86 - 0.5 * t) + (rnd() - 0.5) * W * 0.16,
+        by: P.moteFall ? rnd() * H : t * H * 0.88,
+        r: 0.9 + rnd() * 1.7, ph: rnd() * Math.PI * 2, sp: 0.25 + rnd() * 0.5 });
+    }
+  }
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function frame(t) {
+    const P = PALETTES[opts.mode];
+    const p = reduced ? 1 : Math.min(1, (t - t0) / 3200);
+    const upTo = Math.floor(dots.length * (p < 1 ? p * p * (3 - 2 * p) : 1));
+    if (upTo > drawn) { drawDotsInto(pctx, DPR, drawn, upTo); drawn = upTo; }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(plate, 0, 0);
+    if (!reduced) {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const tt = t / 1000;
+      ctx.fillStyle = P.mote;
+      for (const m of motes) {
+        let mx, my;
+        if (P.moteFall) { mx = m.bx + Math.sin(tt * m.sp + m.ph) * 14;
+          my = (m.by + tt * 26 * (0.6 + m.sp)) % H; }
+        else { mx = m.bx + Math.sin(tt * m.sp + m.ph) * 9; my = m.by + Math.cos(tt * m.sp * 0.7 + m.ph) * 6; }
+        ctx.globalAlpha = 0.25 + 0.3 * Math.sin(tt * m.sp * 2 + m.ph) ** 2;
+        ctx.beginPath(); ctx.arc(mx, my, m.r, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function rebuild() {
+    const P = PALETTES[opts.mode];
+    tintDeer(P, opts.light);
+    paintScene(P);
+    buildDots();
+    makeMotes(P);
+    pctx.setTransform(1, 0, 0, 1, 0, 0);
+    pctx.clearRect(0, 0, plate.width, plate.height);
+    drawn = 0; t0 = performance.now();
+  }
+
+  rebuild();
+  requestAnimationFrame(frame);
+
+})();
+</script>
+
+</body>
+</html>
