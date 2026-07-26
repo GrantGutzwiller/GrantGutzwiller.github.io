@@ -33,6 +33,8 @@
     { name: 'Salt Lake City, UT', lat: 40.7608, lon: -111.8910, type: 'travel' },
     { name: 'Portland, OR', lat: 45.5152, lon: -122.6784, type: 'travel' },
     { name: 'Aspen, CO', lat: 39.1911, lon: -106.8175, type: 'travel' },
+    { name: 'Vail, CO', lat: 39.6403, lon: -106.3742, type: 'travel' },
+    { name: 'Denver, CO', lat: 39.7392, lon: -104.9903, type: 'travel' },
     { name: 'New York, NY', lat: 40.7128, lon: -74.0060, type: 'travel' },
     { name: 'Seattle, WA', lat: 47.6062, lon: -122.3321, type: 'travel' },
     { name: 'San Diego, CA', lat: 32.7157, lon: -117.1611, type: 'travel' },
