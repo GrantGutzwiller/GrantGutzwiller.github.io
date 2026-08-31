@@ -87,6 +87,8 @@
     // Asia
     { name: 'Kyoto, Japan', lat: 35.0116, lon: 135.7681, type: 'travel' },
     { name: 'Hiroshima, Japan', lat: 34.3853, lon: 132.4553, type: 'travel' },
+    { name: 'Singapore', lat: 1.3521, lon: 103.8198, type: 'travel' },
+    { name: 'Kuala Lumpur, Malaysia', lat: 3.1390, lon: 101.6869, type: 'travel' },
   ];
 
   const COLORS = {
