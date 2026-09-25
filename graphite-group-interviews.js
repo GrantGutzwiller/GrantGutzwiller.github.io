@@ -108,6 +108,8 @@
   };
 
   const BASE_TITLE = document.title;
+  // The static page (graphite-group-interviews/static/) is just the timer: no bouncing logo, fireworks or dino.
+  const EFFECTS_ENABLED = document.body.dataset.effects !== 'off';
 
   function isFiniteNumber(value) {
     return typeof value === 'number' && Number.isFinite(value);
@@ -1106,8 +1108,10 @@
     renderDocumentTitle();
     syncWakeLock();
     maybePlayMilestoneChimes(remainingPrecise);
-    updateDvdPhase();
-    updateDinoScene();
+    if (EFFECTS_ENABLED) {
+      updateDvdPhase();
+      updateDinoScene();
+    }
     state.lastObservedRemainingPrecise = remainingPrecise;
     persistState();
   }
