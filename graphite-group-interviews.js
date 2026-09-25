@@ -1,6 +1,6 @@
 (() => {
   const STORAGE_KEY = 'graphite-group-interview-timer-v1';
-  const SOUND_STORAGE_KEY = 'graphite-group-interview-sound-v1';
+  const FIREWORK_SOUND_STORAGE_KEY = 'graphite-group-interview-firework-sound-v1';
 
   const FINAL_FIVE_SECONDS = 5 * 60;
   // The dino run starts with the 5:10 chime and hits a cactus exactly at 5:00. Every frame
@@ -77,7 +77,7 @@
     T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
     U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.']
   };
-  const CASE_WORK_MILESTONE_SECONDS = [15 * 60, 5 * 60 + 10, 60];
+  const MILESTONE_SECONDS = [15 * 60, 5 * 60 + 10, 60];
 
   const DVD_START_SECONDS = 40 * 60;
   const CORNER_HIT_SECONDS = 16 * 60;
@@ -122,22 +122,18 @@
   const SHOW_ROCKET_LAUNCH_MS = [0, 330, 720, 1100, 1480, 1900, 2300, 2750, 3350, 3350, 3350];
   const SHOW_FINALE_ROCKETS = 3;
 
-  const MODES = {
-    caseWork: { label: 'Case Work', durationSeconds: 45 * 60 },
-    presentation: { label: 'Presentation', durationSeconds: 10 * 60 }
-  };
+  const DURATION_SECONDS = 45 * 60;
 
   const state = {
-    mode: 'caseWork',
-    remainingSeconds: MODES.caseWork.durationSeconds,
+    remainingSeconds: DURATION_SECONDS,
     isRunning: false,
     endTimeMs: 0,
     pausedRemainingPrecise: null,
     intervalId: null,
     audioContext: null,
-    audioOutput: null,
+    fireworkOutput: null,
     noiseBuffer: null,
-    muted: false,
+    fireworkSounds: false,
     wakeLock: null,
     wakeLockRequest: null,
     wakeLockDenied: false,
@@ -182,8 +178,6 @@
   };
 
   const elements = {
-    modeButtons: [...document.querySelectorAll('.mode-button')],
-    modeLabel: document.getElementById('timerModeLabel'),
     timerDisplay: document.getElementById('timerDisplay'),
     timerStatus: document.getElementById('timerStatus'),
     progressFill: document.getElementById('progressFill'),
@@ -219,10 +213,6 @@
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
-  function getModeDuration() {
-    return MODES[state.mode].durationSeconds;
-  }
-
   function syncRemainingFromClock() {
     if (!state.isRunning) {
       return;
@@ -243,13 +233,13 @@
     return state.remainingSeconds;
   }
 
-  function isFinalFiveCaseWork() {
+  function isFinalFive() {
     const remaining = getRemainingSecondsPrecise();
-    return state.isRunning && state.mode === 'caseWork' && remaining > 0 && remaining <= FINAL_FIVE_SECONDS;
+    return state.isRunning && remaining > 0 && remaining <= FINAL_FIVE_SECONDS;
   }
 
   function isDvdPhaseRange(remaining) {
-    return state.mode === 'caseWork' && remaining <= DVD_START_SECONDS && remaining > DVD_END_SECONDS;
+    return remaining <= DVD_START_SECONDS && remaining > DVD_END_SECONDS;
   }
 
   function isUnitPoint(point) {
@@ -272,7 +262,6 @@
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
-          mode: state.mode,
           remainingSeconds: state.remainingSeconds,
           isRunning: state.isRunning,
           endTimeMs: state.endTimeMs,
@@ -295,11 +284,11 @@
       }
 
       const saved = JSON.parse(raw);
-      if (!saved || !Object.prototype.hasOwnProperty.call(MODES, saved.mode)) {
+      // Saves from the removed 10-minute Presentation mode don't carry over.
+      if (!saved || (saved.mode !== undefined && saved.mode !== 'caseWork')) {
         return;
       }
 
-      state.mode = saved.mode;
       state.isRunning = Boolean(saved.isRunning);
       state.endTimeMs = Number(saved.endTimeMs) || 0;
       state.remainingSeconds = Math.max(0, Math.floor(Number(saved.remainingSeconds) || 0));
@@ -312,7 +301,7 @@
           state.endTimeMs = 0;
         }
       } else if (state.remainingSeconds === 0) {
-        state.remainingSeconds = getModeDuration();
+        state.remainingSeconds = DURATION_SECONDS;
       } else if (isFiniteNumber(saved.pausedRemainingPrecise)) {
         state.pausedRemainingPrecise = saved.pausedRemainingPrecise;
       }
@@ -339,7 +328,7 @@
   }
 
   function renderStatus() {
-    if (isFinalFiveCaseWork()) {
+    if (isFinalFive()) {
       elements.timerStatus.textContent = 'Final 5 minutes.';
       return;
     }
@@ -354,7 +343,7 @@
       return;
     }
 
-    if (state.remainingSeconds === getModeDuration()) {
+    if (state.remainingSeconds === DURATION_SECONDS) {
       elements.timerStatus.textContent = 'Ready to start.';
       return;
     }
@@ -362,29 +351,31 @@
     elements.timerStatus.textContent = 'Paused.';
   }
 
-  // Every sound goes through one gain node, so muting also silences sounds already playing.
-  function getAudioOutput() {
+  // Firework sounds go through their own gain node, so turning them off also silences any
+  // already playing. The chimes and end beeps always play.
+  function getFireworkOutput() {
     const context = state.audioContext;
-    if (!state.audioOutput) {
-      state.audioOutput = context.createGain();
-      state.audioOutput.connect(context.destination);
+    if (!state.fireworkOutput) {
+      state.fireworkOutput = context.createGain();
+      state.fireworkOutput.connect(context.destination);
     }
-    state.audioOutput.gain.value = state.muted ? 0 : 1;
-    return state.audioOutput;
+    state.fireworkOutput.gain.value = state.fireworkSounds ? 1 : 0;
+    return state.fireworkOutput;
   }
 
-  function playSound(schedule) {
+  function playSound(schedule, { firework = false } = {}) {
     const context = state.audioContext;
-    if (!context || state.muted) {
+    if (!context || (firework && !state.fireworkSounds)) {
       return;
     }
 
+    const play = () => schedule(context, firework ? getFireworkOutput() : context.destination);
     if (context.state === 'suspended') {
-      context.resume().then(() => schedule(context, getAudioOutput())).catch(() => {});
+      context.resume().then(play).catch(() => {});
       return;
     }
 
-    schedule(context, getAudioOutput());
+    play();
   }
 
   function getNoiseBuffer(context) {
@@ -458,7 +449,7 @@
           });
         }
       }
-    });
+    }, { firework: true });
   }
 
   function playMilestoneChime(frequencies) {
@@ -504,12 +495,12 @@
 
   function maybePlayMilestoneChimes(remainingPrecise) {
     const previous = state.lastMilestoneRemainingPrecise;
-    if (!state.isRunning || state.mode !== 'caseWork' || !isFiniteNumber(previous)) {
+    if (!state.isRunning || !isFiniteNumber(previous)) {
       state.lastMilestoneRemainingPrecise = remainingPrecise;
       return;
     }
 
-    CASE_WORK_MILESTONE_SECONDS.forEach((threshold) => {
+    MILESTONE_SECONDS.forEach((threshold) => {
       if (previous > threshold && remainingPrecise <= threshold) {
         if (threshold === 15 * 60) {
           playMilestoneChime([523.25, 659.25, 783.99]);
@@ -788,12 +779,11 @@
     return DINO_RUN_START_SECONDS - getRemainingSecondsPrecise();
   }
 
-  // Shown in Case Work from 5:10 to 4:54 while the timer runs, and frozen in place while paused there.
+  // Shown from 5:10 to 4:54 while the timer runs, and frozen in place while paused there.
   function shouldShowDinoScene(sceneSeconds) {
     const hasStarted = state.isRunning || isFiniteNumber(state.pausedRemainingPrecise);
     return (
       Boolean(elements.dinoScene) &&
-      state.mode === 'caseWork' &&
       hasStarted &&
       sceneSeconds >= -DINO_SCENE_OPEN_LEAD_SECONDS &&
       sceneSeconds < DINO_SCENE_SECONDS
@@ -1698,7 +1688,6 @@
     const remaining = getRemainingSecondsPrecise();
     const crossedIntoDvd = (
       state.isRunning &&
-      state.mode === 'caseWork' &&
       isFiniteNumber(state.lastObservedRemainingPrecise) &&
       state.lastObservedRemainingPrecise > DVD_START_SECONDS &&
       remaining <= DVD_START_SECONDS
@@ -1742,10 +1731,10 @@
   }
 
   function renderDocumentTitle() {
-    const isIdle = !state.isRunning && state.remainingSeconds === getModeDuration();
+    const isIdle = !state.isRunning && state.remainingSeconds === DURATION_SECONDS;
     document.title = isIdle
       ? BASE_TITLE
-      : `${formatTime(state.remainingSeconds)} · ${MODES[state.mode].label}`;
+      : `${formatTime(state.remainingSeconds)} · ${BASE_TITLE}`;
   }
 
   // Keeps the display awake while the timer runs; the browser drops the lock when the tab is hidden.
@@ -1787,23 +1776,16 @@
 
   function render() {
     const remainingPrecise = getRemainingSecondsPrecise();
-    const duration = getModeDuration();
+    const duration = DURATION_SECONDS;
     const progressRatio = duration > 0 ? state.remainingSeconds / duration : 0;
     const progressPercent = Math.max(0, Math.min(100, progressRatio * 100));
 
-    elements.modeLabel.textContent = MODES[state.mode].label;
     elements.timerDisplay.textContent = formatTime(state.remainingSeconds);
     elements.progressFill.style.width = `${progressPercent}%`;
     elements.startPauseButton.textContent = state.isRunning ? 'Pause' : 'Start';
     elements.startPauseButton.setAttribute('aria-pressed', state.isRunning ? 'true' : 'false');
 
-    document.body.classList.toggle('final-five', isFinalFiveCaseWork());
-
-    elements.modeButtons.forEach((button) => {
-      const isActive = button.dataset.mode === state.mode;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
+    document.body.classList.toggle('final-five', isFinalFive());
 
     updateFullscreenButtonLabel();
     renderStatus();
@@ -1811,7 +1793,7 @@
     syncWakeLock();
     maybePlayMilestoneChimes(remainingPrecise);
     if (state.remainingSeconds > 0) {
-      // Any way back to time on the clock (reset, restart, mode switch, +1 min) ends the celebration.
+      // Any way back to time on the clock (reset, restart, +1 min) ends the celebration.
       stopTimeUpCelebration();
     }
     if (EFFECTS_ENABLED) {
@@ -1902,9 +1884,10 @@
     }
   }
 
-  function restoreSoundSetting() {
+  // Firework sounds are off unless someone turns them on; the choice is remembered.
+  function restoreFireworkSoundSetting() {
     try {
-      state.muted = window.localStorage.getItem(SOUND_STORAGE_KEY) === 'muted';
+      state.fireworkSounds = window.localStorage.getItem(FIREWORK_SOUND_STORAGE_KEY) === 'on';
     } catch (error) {
       // Ignore storage failures.
     }
@@ -1914,22 +1897,25 @@
     if (!elements.soundToggle) {
       return;
     }
-    elements.soundToggle.setAttribute('aria-pressed', state.muted ? 'true' : 'false');
-    elements.soundToggle.title = state.muted ? 'Unmute sounds (M)' : 'Mute sounds (M)';
+    elements.soundToggle.setAttribute('aria-pressed', state.fireworkSounds ? 'true' : 'false');
+    elements.soundToggle.title = state.fireworkSounds ? 'Turn off firework sounds (M)' : 'Turn on firework sounds (M)';
   }
 
-  async function toggleSound() {
-    state.muted = !state.muted;
+  async function toggleFireworkSounds() {
+    if (!elements.soundToggle) {
+      return;
+    }
+    state.fireworkSounds = !state.fireworkSounds;
     try {
-      window.localStorage.setItem(SOUND_STORAGE_KEY, state.muted ? 'muted' : 'on');
+      window.localStorage.setItem(FIREWORK_SOUND_STORAGE_KEY, state.fireworkSounds ? 'on' : 'off');
     } catch (error) {
       // Ignore storage failures.
     }
-    if (state.audioOutput) {
-      state.audioOutput.gain.value = state.muted ? 0 : 1;
+    if (state.fireworkOutput) {
+      state.fireworkOutput.gain.value = state.fireworkSounds ? 1 : 0;
     }
     renderSoundToggle();
-    if (!state.muted) {
+    if (state.fireworkSounds) {
       await ensureAudioContext();
     }
   }
@@ -1944,7 +1930,7 @@
     }
 
     if (state.remainingSeconds <= 0) {
-      state.remainingSeconds = getModeDuration();
+      state.remainingSeconds = DURATION_SECONDS;
       state.pausedRemainingPrecise = null;
       resetDvdRunState();
     }
@@ -1961,20 +1947,7 @@
 
   function resetTimer() {
     stopTimer();
-    state.remainingSeconds = getModeDuration();
-    state.pausedRemainingPrecise = null;
-    resetDvdRunState();
-    render();
-  }
-
-  function setMode(nextMode) {
-    if (!Object.prototype.hasOwnProperty.call(MODES, nextMode)) {
-      return;
-    }
-
-    stopTimer();
-    state.mode = nextMode;
-    state.remainingSeconds = getModeDuration();
+    state.remainingSeconds = DURATION_SECONDS;
     state.pausedRemainingPrecise = null;
     resetDvdRunState();
     render();
@@ -2026,7 +1999,7 @@
       ' ': toggleStartPause,
       r: resetTimer,
       f: toggleFullscreen,
-      m: toggleSound
+      m: toggleFireworkSounds
     };
     const action = shortcuts[event.key.toLowerCase()];
     if (!action) {
@@ -2042,13 +2015,6 @@
   }
 
   function bindEvents() {
-    elements.modeButtons.forEach((button) => {
-      button.addEventListener('click', async () => {
-        await ensureAudioContext();
-        setMode(button.dataset.mode);
-      });
-    });
-
     elements.startPauseButton.addEventListener('click', toggleStartPause);
     elements.resetButton.addEventListener('click', resetTimer);
     elements.minusMinuteButton.addEventListener('click', () => adjustMinutes(-1));
@@ -2059,7 +2025,7 @@
     }
 
     if (elements.soundToggle) {
-      elements.soundToggle.addEventListener('click', toggleSound);
+      elements.soundToggle.addEventListener('click', toggleFireworkSounds);
     }
 
     // Browsers only allow audio after a user gesture, so after a reload mid-run the first
@@ -2092,7 +2058,7 @@
   }
 
   restoreState();
-  restoreSoundSetting();
+  restoreFireworkSoundSetting();
   renderSoundToggle();
   bindEvents();
   resizeFireworksCanvas();
