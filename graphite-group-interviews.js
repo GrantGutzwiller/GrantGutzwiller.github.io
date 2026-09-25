@@ -1,5 +1,6 @@
 (() => {
   const STORAGE_KEY = 'graphite-group-interview-timer-v1';
+  const SOUND_STORAGE_KEY = 'graphite-group-interview-sound-v1';
 
   const FINAL_FIVE_SECONDS = 5 * 60;
   // The dino run starts with the 5:10 chime and hits a cactus exactly at 5:00. Every frame
@@ -91,16 +92,26 @@
   const DVD_PRE_HIT_VY = 153;
   const DVD_POST_HIT_VX = 232;
   const DVD_POST_HIT_VY = 171;
-  const DVD_CORNER_HITS = [
+  // Two rigged near misses before the real hit: the logo bounces off one wall with the
+  // neighbouring wall still DVD_NEAR_MISS_GAP_PX away, then off that wall a moment later.
+  const DVD_NEAR_MISS_GAP_PX = 16;
+  const DVD_WAYPOINTS = [
+    { remainingSeconds: 28 * 60, nearMiss: true, speedX: DVD_PRE_HIT_VX, speedY: DVD_PRE_HIT_VY },
+    { remainingSeconds: 21 * 60, nearMiss: true, speedX: DVD_PRE_HIT_VX, speedY: DVD_PRE_HIT_VY },
     { remainingSeconds: CORNER_HIT_SECONDS, speedX: DVD_PRE_HIT_VX, speedY: DVD_PRE_HIT_VY },
     { remainingSeconds: FINAL_CORNER_HIT_SECONDS, speedX: DVD_POST_HIT_VX, speedY: DVD_POST_HIT_VY }
   ];
+  // Starts white to match the header mark, then cycles on every wall hit.
+  const DVD_START_COLOR = '#ffffff';
+  const DVD_COLORS = ['#7aa2ff', '#ff7ab6', '#ffd166', '#6ee7b7', '#c4a1ff', '#ff9f68'];
+  const DVD_LOGO_ASPECT = 202 / 176;
   // graphite-logo-tight.png is graphite-logo-black-256.png cropped to the mark.
   const HEADER_LOGO_CROP = { widthRatio: 176 / 256, centerYRatio: 131 / 256 };
   const PERFECT_CORNER_TOLERANCE_PX = 0.8;
   const CORNER_FIREWORK_COOLDOWN_MS = 180;
   const MAX_CORNER_HIT_STEP_SECONDS = 1;
 
+  const SPARK_RGB = '245, 245, 245';
   const FIREWORK_PARTICLE_COUNT = 34;
   const FIREWORK_DURATION_MS = 780;
   const FINAL_FIREWORK_PARTICLE_COUNT = 90;
@@ -124,6 +135,9 @@
     pausedRemainingPrecise: null,
     intervalId: null,
     audioContext: null,
+    audioOutput: null,
+    noiseBuffer: null,
+    muted: false,
     wakeLock: null,
     wakeLockRequest: null,
     wakeLockDenied: false,
@@ -145,6 +159,7 @@
     dvdReturnStartMs: null,
     dvdReturnFrom: null,
     dvdReturnTo: null,
+    dvdColor: null,
     dvdScale: DVD_MAX_SCALE,
     dvdScaleAnimating: false,
     dvdScaleTweenStartMs: null,
@@ -177,6 +192,7 @@
     minusMinuteButton: document.getElementById('minusMinuteButton'),
     plusMinuteButton: document.getElementById('plusMinuteButton'),
     fullscreenButton: document.getElementById('fullscreenButton'),
+    soundToggle: document.getElementById('soundToggle'),
 
     brandLogo: document.querySelector('.brand-logo'),
     dvdLogoLayer: document.getElementById('dvdLogoLayer'),
@@ -346,13 +362,111 @@
     elements.timerStatus.textContent = 'Paused.';
   }
 
-  function playMilestoneChime(frequencies) {
-    if (!state.audioContext || !Array.isArray(frequencies) || frequencies.length === 0) {
+  // Every sound goes through one gain node, so muting also silences sounds already playing.
+  function getAudioOutput() {
+    const context = state.audioContext;
+    if (!state.audioOutput) {
+      state.audioOutput = context.createGain();
+      state.audioOutput.connect(context.destination);
+    }
+    state.audioOutput.gain.value = state.muted ? 0 : 1;
+    return state.audioOutput;
+  }
+
+  function playSound(schedule) {
+    const context = state.audioContext;
+    if (!context || state.muted) {
       return;
     }
 
-    const context = state.audioContext;
-    const scheduleChime = () => {
+    if (context.state === 'suspended') {
+      context.resume().then(() => schedule(context, getAudioOutput())).catch(() => {});
+      return;
+    }
+
+    schedule(context, getAudioOutput());
+  }
+
+  function getNoiseBuffer(context) {
+    if (!state.noiseBuffer) {
+      const buffer = context.createBuffer(1, context.sampleRate, context.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i += 1) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      state.noiseBuffer = buffer;
+    }
+    return state.noiseBuffer;
+  }
+
+  function playNoise(context, output, { at, duration, peak, filterType, frequency, frequencyEnd, q = 0.8 }) {
+    const noise = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    const gain = context.createGain();
+
+    noise.buffer = getNoiseBuffer(context);
+    filter.type = filterType;
+    filter.Q.value = q;
+    filter.frequency.setValueAtTime(frequency, at);
+    if (frequencyEnd) {
+      filter.frequency.exponentialRampToValueAtTime(frequencyEnd, at + duration);
+    }
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(peak, at + Math.min(0.006, duration / 4));
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(output);
+    noise.start(at, Math.random() * 0.8, duration + 0.02);
+  }
+
+  // A soft firework pop: a puff of filtered noise over a low thump, optionally trailed by crackle.
+  function playPop({ strength = 0.7, pitch = 1, crackle = false } = {}) {
+    playSound((context, output) => {
+      const now = context.currentTime + 0.01;
+      playNoise(context, output, {
+        at: now,
+        duration: 0.22,
+        peak: 0.3 * strength,
+        filterType: 'bandpass',
+        frequency: 1400 * pitch,
+        frequencyEnd: 380 * pitch
+      });
+
+      const thump = context.createOscillator();
+      const thumpGain = context.createGain();
+      thump.type = 'sine';
+      thump.frequency.setValueAtTime(160 * pitch, now);
+      thump.frequency.exponentialRampToValueAtTime(55 * pitch, now + 0.12);
+      thumpGain.gain.setValueAtTime(0.0001, now);
+      thumpGain.gain.exponentialRampToValueAtTime(0.26 * strength, now + 0.008);
+      thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      thump.connect(thumpGain);
+      thumpGain.connect(output);
+      thump.start(now);
+      thump.stop(now + 0.18);
+
+      if (crackle) {
+        for (let i = 0; i < 9; i += 1) {
+          playNoise(context, output, {
+            at: now + 0.12 + Math.random() * 0.55,
+            duration: 0.03,
+            peak: 0.06 * strength * (0.4 + Math.random() * 0.6),
+            filterType: 'highpass',
+            frequency: 2500 + Math.random() * 2500
+          });
+        }
+      }
+    });
+  }
+
+  function playMilestoneChime(frequencies) {
+    if (!Array.isArray(frequencies) || frequencies.length === 0) {
+      return;
+    }
+
+    playSound((context, output) => {
       const now = context.currentTime + 0.02;
       frequencies.forEach((frequency, index) => {
         const toneStart = now + index * 0.16;
@@ -377,22 +491,15 @@
 
         baseOsc.connect(baseGain);
         sparkleOsc.connect(sparkleGain);
-        baseGain.connect(context.destination);
-        sparkleGain.connect(context.destination);
+        baseGain.connect(output);
+        sparkleGain.connect(output);
 
         baseOsc.start(toneStart);
         sparkleOsc.start(toneStart);
         baseOsc.stop(toneEnd);
         sparkleOsc.stop(toneEnd);
       });
-    };
-
-    if (context.state === 'suspended') {
-      context.resume().then(scheduleChime).catch(() => {});
-      return;
-    }
-
-    scheduleChime();
+    });
   }
 
   function maybePlayMilestoneChimes(remainingPrecise) {
@@ -742,8 +849,7 @@
     // fractional pixels. The logo always bounces at DVD_MIN_SCALE.
     const logo = elements.dvdLogoFloating;
     const width = getCssSize(logo, 'width') || Math.min(window.innerWidth * 0.56, 220);
-    const aspect = logo.naturalWidth > 0 ? logo.naturalHeight / logo.naturalWidth : 1;
-    const height = getCssSize(logo, 'height') || width * aspect;
+    const height = getCssSize(logo, 'height') || width * DVD_LOGO_ASPECT;
     state.dvdSize = { w: width * DVD_MIN_SCALE, h: height * DVD_MIN_SCALE };
   }
 
@@ -861,9 +967,17 @@
     state.dvdReturnFrom = { x: state.dvdPosition.x, y: state.dvdPosition.y };
     state.dvdReturnTo = getHeaderLogoCenter();
     beginDvdScaleTween(getHeaderLogoScale(), DVD_RETURN_DURATION_MS, now);
+    // Fade back to white on the way home so it lands matching the header mark.
+    if (elements.dvdLogoFloating) {
+      elements.dvdLogoFloating.style.transition = `background-color ${DVD_RETURN_DURATION_MS}ms ease`;
+    }
+    applyDvdColor(DVD_START_COLOR);
   }
 
   function cancelDvdReturnAnimation() {
+    if (elements.dvdLogoFloating) {
+      elements.dvdLogoFloating.style.transition = '';
+    }
     state.dvdReturningActive = false;
     state.dvdReturnStartMs = null;
     state.dvdReturnFrom = null;
@@ -953,6 +1067,7 @@
     const sizeMultiplier = isFiniteNumber(options.sizeMultiplier) ? options.sizeMultiplier : 1;
     // A direction confines the burst to one quadrant, e.g. back into the screen from a corner.
     const direction = options.direction || null;
+    const rgb = options.color ? hexToRgb(options.color) : SPARK_RGB;
     const arc = direction ? Math.PI / 2 : Math.PI * 2;
     const particles = [];
 
@@ -967,7 +1082,8 @@
         vy: Math.sin(angle) * speed * (direction ? direction.y : 1),
         ageMs: 0,
         durationMs: durationMs * (0.82 + Math.random() * 0.38),
-        size: (1.2 + Math.random() * 2.1) * sizeMultiplier
+        size: (1.2 + Math.random() * 2.1) * sizeMultiplier,
+        rgb
       });
     }
 
@@ -1041,8 +1157,13 @@
     });
   }
 
-  function drawSpark(ctx, x, y, size, alpha) {
-    ctx.fillStyle = `rgba(245, 245, 245, ${alpha})`;
+  function hexToRgb(hex) {
+    const value = parseInt(hex.slice(1), 16);
+    return `${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}`;
+  }
+
+  function drawSpark(ctx, x, y, size, alpha, rgb = SPARK_RGB) {
+    ctx.fillStyle = `rgba(${rgb}, ${alpha})`;
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fill();
@@ -1090,6 +1211,7 @@
         // Bursts at the top of its climb.
         if (particle.vy >= 0) {
           spawned.push(...createBurstParticles(particle.x, particle.y, particle.burst));
+          playPop({ strength: particle.burst.particleCount > 64 ? 0.85 : 0.6, pitch: 0.8 + Math.random() * 0.4, crackle: true });
           return false;
         }
 
@@ -1113,7 +1235,7 @@
       particle.vy += 350 * deltaSec;
       particle.x += particle.vx * deltaSec;
       particle.y += particle.vy * deltaSec;
-      drawSpark(ctx, particle.x, particle.y, particle.size, Math.max(0, 1 - particle.ageMs / particle.durationMs));
+      drawSpark(ctx, particle.x, particle.y, particle.size, Math.max(0, 1 - particle.ageMs / particle.durationMs), particle.rgb);
 
       return true;
     });
@@ -1159,6 +1281,7 @@
 
   function celebrateLanding() {
     popHeaderLogo();
+    playPop({ strength: 0.9, pitch: 0.55 });
     const markWidth = elements.brandLogo ? getCssSize(elements.brandLogo, 'width') * HEADER_LOGO_CROP.widthRatio : 150;
     triggerShockwave(getHeaderLogoCenter(), markWidth);
     queueFireworksShow();
@@ -1194,53 +1317,83 @@
     return phase <= 1 ? phase : 2 - phase;
   }
 
-  function solveUnitVelocityToEdge(start, targetIsMin, durationSeconds, desiredSpeed) {
+  // Unfolded, a point p on a bounce axis sits at p + 2m (travelling the way the velocity points)
+  // or at 2 - p + 2m (on its way back); take the candidate whose speed is closest to desired.
+  // arriving and leaving (1 or -1) pin which way the logo travels at the end and the start.
+  function solveUnitVelocity(start, target, durationSeconds, desiredSpeed, arriving = 0, leaving = 0) {
     if (durationSeconds <= 0) {
       return 0;
     }
 
-    // Unfolded, the target edge sits at edge + 2m; take the m whose speed is closest to desired.
-    const edge = targetIsMin ? 0 : 1;
     const minSpeed = desiredSpeed * 0.2;
     let best = null;
 
-    [1, -1].forEach((direction) => {
-      const center = Math.round((start + direction * desiredSpeed * durationSeconds - edge) / 2);
-      for (let k = -2; k <= 2; k += 1) {
-        const velocity = (edge + 2 * (center + k) - start) / durationSeconds;
-        if (Math.abs(velocity) < minSpeed) {
-          continue;
+    [target, 2 - target].forEach((phase) => {
+      [1, -1].forEach((sign) => {
+        const center = Math.round((start + sign * desiredSpeed * durationSeconds - phase) / 2);
+        for (let k = -2; k <= 2; k += 1) {
+          const velocity = (phase + 2 * (center + k) - start) / durationSeconds;
+          const arrivingDirection = (phase < 1 ? 1 : -1) * Math.sign(velocity);
+          if (
+            Math.abs(velocity) < minSpeed ||
+            (arriving !== 0 && arrivingDirection !== arriving) ||
+            (leaving !== 0 && Math.sign(velocity) !== leaving)
+          ) {
+            continue;
+          }
+          const deviation = Math.abs(Math.abs(velocity) - desiredSpeed);
+          if (!best || deviation < best.deviation) {
+            best = { velocity, deviation };
+          }
         }
-        const deviation = Math.abs(Math.abs(velocity) - desiredSpeed);
-        if (!best || deviation < best.deviation) {
-          best = { velocity, deviation };
-        }
-      }
+      });
     });
 
-    return best ? best.velocity : (edge - start) / durationSeconds;
+    return best ? best.velocity : (target - start) / durationSeconds;
   }
 
-  function pickBestCornerPath(start, durationSeconds, targetSpeedX, targetSpeedY) {
+  // Every way to reach a waypoint: a corner exactly, or for a near miss, one wall with the
+  // neighbouring wall still a gap away and the logo heading into the corner.
+  function getWaypointOptions(waypoint) {
+    const gap = {
+      u: DVD_NEAR_MISS_GAP_PX / Math.max(1, state.dvdBounds.maxX - state.dvdBounds.minX),
+      v: DVD_NEAR_MISS_GAP_PX / Math.max(1, state.dvdBounds.maxY - state.dvdBounds.minY)
+    };
+    const options = [];
+
+    [0, 1].forEach((cornerU) => {
+      [0, 1].forEach((cornerV) => {
+        const intoCorner = { u: cornerU === 0 ? -1 : 1, v: cornerV === 0 ? -1 : 1 };
+        if (!waypoint.nearMiss) {
+          options.push({ end: { u: cornerU, v: cornerV }, arriving: { u: 0, v: 0 } });
+          return;
+        }
+        options.push({ end: { u: cornerU, v: Math.abs(cornerV - gap.v) }, arriving: { u: 0, v: intoCorner.v } });
+        options.push({ end: { u: Math.abs(cornerU - gap.u), v: cornerV }, arriving: { u: intoCorner.u, v: 0 } });
+      });
+    });
+
+    return options;
+  }
+
+  function pickBestPath(start, durationSeconds, waypoint, leaving) {
     const spanX = Math.max(1, state.dvdBounds.maxX - state.dvdBounds.minX);
     const spanY = Math.max(1, state.dvdBounds.maxY - state.dvdBounds.minY);
     let best = null;
 
-    [0, 1].forEach((cornerU) => {
-      [0, 1].forEach((cornerV) => {
-        const velocity = {
-          u: solveUnitVelocityToEdge(start.u, cornerU === 0, durationSeconds, targetSpeedX / spanX),
-          v: solveUnitVelocityToEdge(start.v, cornerV === 0, durationSeconds, targetSpeedY / spanY)
-        };
-        const speedPenalty = (
-          Math.abs(Math.abs(velocity.u) * spanX - targetSpeedX) +
-          Math.abs(Math.abs(velocity.v) * spanY - targetSpeedY)
-        );
+    getWaypointOptions(waypoint).forEach((option) => {
+      const velocity = {
+        u: solveUnitVelocity(start.u, option.end.u, durationSeconds, waypoint.speedX / spanX, option.arriving.u, leaving.u),
+        v: solveUnitVelocity(start.v, option.end.v, durationSeconds, waypoint.speedY / spanY, option.arriving.v, leaving.v)
+      };
+      const speedPenalty = (
+        Math.abs(Math.abs(velocity.u) * spanX - waypoint.speedX) +
+        Math.abs(Math.abs(velocity.v) * spanY - waypoint.speedY)
+      );
 
-        if (!best || speedPenalty < best.speedPenalty) {
-          best = { corner: { u: cornerU, v: cornerV }, velocity, speedPenalty };
-        }
-      });
+      if (!best || speedPenalty < best.speedPenalty) {
+        best = { end: option.end, arriving: option.arriving, velocity, speedPenalty };
+      }
     });
 
     return best;
@@ -1250,25 +1403,32 @@
     const path = [];
     let start = anchor;
     let startRemaining = anchorRemaining;
+    // After a near miss the logo is still mid-air on one axis, so it must carry on the same way.
+    let leaving = { u: 0, v: 0 };
 
-    DVD_CORNER_HITS.forEach((hit) => {
-      if (startRemaining <= hit.remainingSeconds) {
+    DVD_WAYPOINTS.forEach((waypoint) => {
+      if (startRemaining <= waypoint.remainingSeconds) {
         return;
       }
 
-      const best = pickBestCornerPath(start, startRemaining - hit.remainingSeconds, hit.speedX, hit.speedY);
+      const best = pickBestPath(start, startRemaining - waypoint.remainingSeconds, waypoint, leaving);
       path.push({
         startRemaining,
-        endRemaining: hit.remainingSeconds,
+        endRemaining: waypoint.remainingSeconds,
         start,
         velocity: best.velocity,
-        end: best.corner
+        end: best.end
       });
-      start = best.corner;
-      startRemaining = hit.remainingSeconds;
+      start = best.end;
+      startRemaining = waypoint.remainingSeconds;
+      leaving = best.arriving;
     });
 
     state.dvdPath = path.length > 0 ? path : null;
+  }
+
+  function isCornerPoint(point) {
+    return (point.u === 0 || point.u === 1) && (point.v === 0 || point.v === 1);
   }
 
   function getDvdUnitPoint(remaining) {
@@ -1283,6 +1443,39 @@
       u: reflectUnit(segment.start.u, segment.velocity.u, elapsed),
       v: reflectUnit(segment.start.v, segment.velocity.v, elapsed)
     };
+  }
+
+  // Walls crossed on one axis: the whole numbers passed in unfolded space. A segment that starts on
+  // a wall doesn't count it again; the previous segment already did.
+  function countWallHits(start, velocity, elapsedSeconds) {
+    const end = start + velocity * elapsedSeconds;
+    if (velocity > 0) {
+      return Math.floor(end + 1e-9) - Math.floor(start);
+    }
+    if (velocity < 0) {
+      return Math.ceil(start) - Math.ceil(end - 1e-9);
+    }
+    return 0;
+  }
+
+  // Like the real DVD logo, it changes colour every time it hits a wall. Worked out from the
+  // clock like the position, so pausing and reloading keep the same colour.
+  function getDvdColor(remaining) {
+    let hits = 0;
+    state.dvdPath.forEach((segment) => {
+      const elapsed = Math.max(0, Math.min(segment.startRemaining - segment.endRemaining, segment.startRemaining - remaining));
+      hits += countWallHits(segment.start.u, segment.velocity.u, elapsed);
+      hits += countWallHits(segment.start.v, segment.velocity.v, elapsed);
+    });
+    return hits === 0 ? DVD_START_COLOR : DVD_COLORS[(hits - 1) % DVD_COLORS.length];
+  }
+
+  function applyDvdColor(color) {
+    if (!elements.dvdLogoFloating || state.dvdColor === color) {
+      return;
+    }
+    state.dvdColor = color;
+    elements.dvdLogoFloating.style.backgroundColor = color;
   }
 
   function getCornerKey(corner) {
@@ -1323,11 +1516,12 @@
       atTop ? DVD_EDGE_MARGIN : viewport.h - DVD_EDGE_MARGIN,
       { ...options, direction: { x: atLeft ? 1 : -1, y: atTop ? 1 : -1 } }
     );
+    playPop(options.sound);
     state.dvdLastCornerFireworkMs = now;
     state.dvdCurrentCornerContactKey = getCornerKey(corner);
   }
 
-  function maybeTriggerPlannedCornerFireworks(remaining) {
+  function maybeTriggerPlannedCornerFireworks(remaining, color) {
     const previous = state.lastRemainingPrecise;
     // A +/- minute jump across a hit is not a hit.
     if (!isFiniteNumber(previous) || previous - remaining > MAX_CORNER_HIT_STEP_SECONDS) {
@@ -1335,22 +1529,24 @@
     }
 
     state.dvdPath.forEach((segment) => {
-      if (previous > segment.endRemaining && remaining <= segment.endRemaining) {
+      if (isCornerPoint(segment.end) && previous > segment.endRemaining && remaining <= segment.endRemaining) {
         const isFinale = segment.endRemaining === FINAL_CORNER_HIT_SECONDS;
         triggerCornerFireworks(segment.end, isFinale
           ? {
             force: true,
+            color,
+            sound: { strength: 1.1, crackle: true },
             particleCount: FINAL_FIREWORK_PARTICLE_COUNT,
             durationMs: FINAL_FIREWORK_DURATION_MS,
             speedMultiplier: 1.42,
             sizeMultiplier: 1.95
           }
-          : { force: true });
+          : { force: true, color });
       }
     });
   }
 
-  function maybeTriggerPerfectCornerFireworks() {
+  function maybeTriggerPerfectCornerFireworks(color) {
     const contact = getCornerContact(state.dvdPosition);
     if (!contact) {
       state.dvdCurrentCornerContactKey = null;
@@ -1358,7 +1554,7 @@
     }
 
     if (state.dvdCurrentCornerContactKey !== getCornerKey(contact)) {
-      triggerCornerFireworks(contact);
+      triggerCornerFireworks(contact, { color });
     }
   }
 
@@ -1367,9 +1563,11 @@
       return;
     }
 
+    const color = getDvdColor(remaining);
     state.dvdPosition = toScreenPoint(getDvdUnitPoint(remaining));
-    maybeTriggerPlannedCornerFireworks(remaining);
-    maybeTriggerPerfectCornerFireworks();
+    maybeTriggerPlannedCornerFireworks(remaining, color);
+    maybeTriggerPerfectCornerFireworks(color);
+    applyDvdColor(color);
     applyDvdPosition();
     state.lastRemainingPrecise = remaining;
   }
@@ -1642,31 +1840,28 @@
   }
 
   function playEndSound() {
-    if (!state.audioContext) {
-      return;
-    }
+    playSound((context, output) => {
+      const now = context.currentTime;
+      const totalBeeps = 4;
 
-    const context = state.audioContext;
-    const now = context.currentTime;
-    const totalBeeps = 4;
+      for (let i = 0; i < totalBeeps; i += 1) {
+        const toneStart = now + i * 0.35;
+        const toneEnd = toneStart + 0.2;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
 
-    for (let i = 0; i < totalBeeps; i += 1) {
-      const toneStart = now + i * 0.35;
-      const toneEnd = toneStart + 0.2;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(i % 2 === 0 ? 920 : 740, toneStart);
+        gain.gain.setValueAtTime(0.0001, toneStart);
+        gain.gain.exponentialRampToValueAtTime(0.22, toneStart + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, toneEnd);
 
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(i % 2 === 0 ? 920 : 740, toneStart);
-      gain.gain.setValueAtTime(0.0001, toneStart);
-      gain.gain.exponentialRampToValueAtTime(0.22, toneStart + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, toneEnd);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(toneStart);
-      oscillator.stop(toneEnd);
-    }
+        oscillator.connect(gain);
+        gain.connect(output);
+        oscillator.start(toneStart);
+        oscillator.stop(toneEnd);
+      }
+    });
   }
 
   function finishTimer() {
@@ -1704,6 +1899,38 @@
       } catch (error) {
         // Ignore resume failures.
       }
+    }
+  }
+
+  function restoreSoundSetting() {
+    try {
+      state.muted = window.localStorage.getItem(SOUND_STORAGE_KEY) === 'muted';
+    } catch (error) {
+      // Ignore storage failures.
+    }
+  }
+
+  function renderSoundToggle() {
+    if (!elements.soundToggle) {
+      return;
+    }
+    elements.soundToggle.setAttribute('aria-pressed', state.muted ? 'true' : 'false');
+    elements.soundToggle.title = state.muted ? 'Unmute sounds (M)' : 'Mute sounds (M)';
+  }
+
+  async function toggleSound() {
+    state.muted = !state.muted;
+    try {
+      window.localStorage.setItem(SOUND_STORAGE_KEY, state.muted ? 'muted' : 'on');
+    } catch (error) {
+      // Ignore storage failures.
+    }
+    if (state.audioOutput) {
+      state.audioOutput.gain.value = state.muted ? 0 : 1;
+    }
+    renderSoundToggle();
+    if (!state.muted) {
+      await ensureAudioContext();
     }
   }
 
@@ -1798,7 +2025,8 @@
     const shortcuts = {
       ' ': toggleStartPause,
       r: resetTimer,
-      f: toggleFullscreen
+      f: toggleFullscreen,
+      m: toggleSound
     };
     const action = shortcuts[event.key.toLowerCase()];
     if (!action) {
@@ -1830,6 +2058,18 @@
       elements.fullscreenButton.addEventListener('click', toggleFullscreen);
     }
 
+    if (elements.soundToggle) {
+      elements.soundToggle.addEventListener('click', toggleSound);
+    }
+
+    // Browsers only allow audio after a user gesture, so after a reload mid-run the first
+    // click or key press anywhere brings the sounds back.
+    ['pointerdown', 'keydown'].forEach((type) => {
+      document.addEventListener(type, () => {
+        ensureAudioContext();
+      }, { once: true, capture: true });
+    });
+
     document.addEventListener('fullscreenchange', () => {
       updateFullscreenButtonLabel();
       handleViewportChange();
@@ -1852,6 +2092,8 @@
   }
 
   restoreState();
+  restoreSoundSetting();
+  renderSoundToggle();
   bindEvents();
   resizeFireworksCanvas();
 
