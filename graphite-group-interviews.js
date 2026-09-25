@@ -34,6 +34,11 @@
   const FIREWORK_DURATION_MS = 780;
   const FINAL_FIREWORK_PARTICLE_COUNT = 90;
   const FINAL_FIREWORK_DURATION_MS = 3200;
+  const SHOCKWAVE_DURATION_MS = 750;
+  const SHOW_ROCKET_GRAVITY = 520;
+  // ms after the logo docks at 0:00; the last three go up together as the finale.
+  const SHOW_ROCKET_LAUNCH_MS = [0, 330, 720, 1100, 1480, 1900, 2300, 2750, 3350, 3350, 3350];
+  const SHOW_FINALE_ROCKETS = 3;
 
   const MODES = {
     caseWork: { label: 'Case Work', durationSeconds: 45 * 60 },
@@ -83,7 +88,10 @@
     fireworksParticles: [],
     fireworksContext: null,
     fireworksRafId: null,
-    fireworksLastFrameMs: null
+    fireworksLastFrameMs: null,
+    fireworksClockMs: 0,
+    fireworksQueue: [],
+    celebrateOnLanding: false
   };
 
   const elements = {
@@ -584,6 +592,7 @@
 
   function clearFireworks() {
     state.fireworksParticles = [];
+    state.fireworksQueue = [];
     state.fireworksActive = false;
     document.body.classList.remove('fireworks-active');
 
@@ -619,11 +628,24 @@
     }
   }
 
-  function triggerFireworks(x, y, options = {}) {
+  function startFireworksLoop() {
     if (!elements.fireworksLayer) {
       return;
     }
 
+    if (!state.fireworksActive) {
+      resizeFireworksCanvas();
+      state.fireworksActive = true;
+      document.body.classList.add('fireworks-active');
+    }
+
+    if (state.fireworksRafId === null) {
+      state.fireworksLastFrameMs = null;
+      state.fireworksRafId = window.requestAnimationFrame(fireworksFrame);
+    }
+  }
+
+  function createBurstParticles(x, y, options = {}) {
     const particleCount = isFiniteNumber(options.particleCount) ? Math.max(1, Math.floor(options.particleCount)) : FIREWORK_PARTICLE_COUNT;
     const durationMs = isFiniteNumber(options.durationMs) ? Math.max(80, options.durationMs) : FIREWORK_DURATION_MS;
     const speedMultiplier = isFiniteNumber(options.speedMultiplier) ? options.speedMultiplier : 1;
@@ -631,14 +653,13 @@
     // A direction confines the burst to one quadrant, e.g. back into the screen from a corner.
     const direction = options.direction || null;
     const arc = direction ? Math.PI / 2 : Math.PI * 2;
-
-    resizeFireworksCanvas();
-    state.fireworksParticles = [];
+    const particles = [];
 
     for (let i = 0; i < particleCount; i += 1) {
-      const angle = Math.random() * arc;
-      const speed = (95 + Math.random() * 220) * speedMultiplier;
-      state.fireworksParticles.push({
+      // A ring burst spaces its sparks evenly at one speed, so it opens as a clean circle.
+      const angle = options.ring ? (i / particleCount) * Math.PI * 2 : Math.random() * arc;
+      const speed = (options.ring ? 230 : 95 + Math.random() * 220) * speedMultiplier;
+      particles.push({
         x,
         y,
         vx: Math.cos(angle) * speed * (direction ? direction.x : 1),
@@ -649,13 +670,81 @@
       });
     }
 
-    state.fireworksActive = true;
-    document.body.classList.add('fireworks-active');
+    return particles;
+  }
 
-    if (state.fireworksRafId === null) {
-      state.fireworksLastFrameMs = null;
-      state.fireworksRafId = window.requestAnimationFrame(fireworksFrame);
+  function triggerFireworks(x, y, options = {}) {
+    if (!elements.fireworksLayer) {
+      return;
     }
+
+    state.fireworksParticles.push(...createBurstParticles(x, y, options));
+    startFireworksLoop();
+  }
+
+  function triggerShockwave(center, markWidth) {
+    if (!elements.fireworksLayer) {
+      return;
+    }
+
+    // Two rings, the second trailing slightly, like the thud of the logo docking.
+    [0, -140].forEach((ageMs, index) => {
+      state.fireworksParticles.push({
+        kind: 'ring',
+        x: center.x,
+        y: center.y,
+        startRadius: markWidth * 0.5,
+        endRadius: markWidth * (index === 0 ? 1.9 : 1.4),
+        ageMs,
+        durationMs: SHOCKWAVE_DURATION_MS
+      });
+    });
+    startFireworksLoop();
+  }
+
+  function queueFireworksShow() {
+    if (!elements.fireworksLayer) {
+      return;
+    }
+
+    const startMs = state.fireworksClockMs;
+    state.fireworksQueue = SHOW_ROCKET_LAUNCH_MS.map((delayMs, index) => ({ atMs: startMs + delayMs, index }));
+    startFireworksLoop();
+  }
+
+  function launchRocket(index) {
+    const viewport = getViewportSize();
+    const isFinale = index >= SHOW_ROCKET_LAUNCH_MS.length - SHOW_FINALE_ROCKETS;
+    // Spread launches across the screen: each rocket gets its own lane, jittered.
+    const lane = isFinale
+      ? (index - (SHOW_ROCKET_LAUNCH_MS.length - SHOW_FINALE_ROCKETS) + 0.5) / SHOW_FINALE_ROCKETS
+      : ((index * 0.618) % 1);
+    const x = viewport.w * (0.1 + 0.8 * lane) + (Math.random() - 0.5) * viewport.w * 0.06;
+    const apexY = viewport.h * (isFinale ? 0.12 + Math.random() * 0.08 : 0.16 + Math.random() * 0.26);
+    const scale = Math.max(0.55, Math.min(1, viewport.w / 1200));
+
+    state.fireworksParticles.push({
+      kind: 'rocket',
+      x,
+      y: viewport.h,
+      vx: (Math.random() - 0.5) * 30,
+      vy: -Math.sqrt(2 * SHOW_ROCKET_GRAVITY * (viewport.h - apexY)),
+      ageMs: 0,
+      burst: {
+        ring: !isFinale && index % 3 === 1,
+        particleCount: isFinale ? 96 : 64,
+        durationMs: isFinale ? 2200 : 1500,
+        speedMultiplier: (isFinale ? 1.35 : 1.05) * scale,
+        sizeMultiplier: isFinale ? 1.6 : 1.25
+      }
+    });
+  }
+
+  function drawSpark(ctx, x, y, size, alpha) {
+    ctx.fillStyle = `rgba(245, 245, 245, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function updateFireworks(deltaSec) {
@@ -666,8 +755,56 @@
     const ctx = state.fireworksContext;
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
+    state.fireworksClockMs += deltaSec * 1000;
+    while (state.fireworksQueue.length > 0 && state.fireworksQueue[0].atMs <= state.fireworksClockMs) {
+      launchRocket(state.fireworksQueue.shift().index);
+    }
+
+    const spawned = [];
     state.fireworksParticles = state.fireworksParticles.filter((particle) => {
       particle.ageMs += deltaSec * 1000;
+
+      if (particle.kind === 'ring') {
+        if (particle.ageMs < 0) {
+          return true;
+        }
+        if (particle.ageMs >= particle.durationMs) {
+          return false;
+        }
+        const t = particle.ageMs / particle.durationMs;
+        const eased = 1 - Math.pow(1 - t, 3);
+        ctx.strokeStyle = `rgba(245, 245, 245, ${0.85 * (1 - t)})`;
+        ctx.lineWidth = Math.max(0.5, 3 * (1 - t));
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.startRadius + (particle.endRadius - particle.startRadius) * eased, 0, Math.PI * 2);
+        ctx.stroke();
+        return true;
+      }
+
+      if (particle.kind === 'rocket') {
+        particle.vy += SHOW_ROCKET_GRAVITY * deltaSec;
+        particle.x += particle.vx * deltaSec;
+        particle.y += particle.vy * deltaSec;
+
+        // Bursts at the top of its climb.
+        if (particle.vy >= 0) {
+          spawned.push(...createBurstParticles(particle.x, particle.y, particle.burst));
+          return false;
+        }
+
+        spawned.push({
+          x: particle.x,
+          y: particle.y,
+          vx: (Math.random() - 0.5) * 24,
+          vy: 20 + Math.random() * 40,
+          ageMs: 0,
+          durationMs: 380,
+          size: 1 + Math.random() * 0.6
+        });
+        drawSpark(ctx, particle.x, particle.y, 2.2, 1);
+        return true;
+      }
+
       if (particle.ageMs >= particle.durationMs) {
         return false;
       }
@@ -675,22 +812,19 @@
       particle.vy += 350 * deltaSec;
       particle.x += particle.vx * deltaSec;
       particle.y += particle.vy * deltaSec;
-
-      const alpha = Math.max(0, 1 - particle.ageMs / particle.durationMs);
-      ctx.fillStyle = `rgba(245, 245, 245, ${alpha})`;
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx.fill();
+      drawSpark(ctx, particle.x, particle.y, particle.size, Math.max(0, 1 - particle.ageMs / particle.durationMs));
 
       return true;
     });
+    state.fireworksParticles.push(...spawned);
 
-    if (state.fireworksParticles.length === 0) {
+    if (state.fireworksParticles.length === 0 && state.fireworksQueue.length === 0) {
       clearFireworks();
     }
   }
 
   // Fireworks run on their own loop so they finish even while the logo flies home or the timer is paused.
+  // The show's clock only advances with frames, so a hidden tab picks the show up where it left off.
   function fireworksFrame(now) {
     state.fireworksRafId = null;
     if (!state.fireworksActive) {
@@ -708,6 +842,49 @@
     if (state.fireworksActive) {
       state.fireworksRafId = window.requestAnimationFrame(fireworksFrame);
     }
+  }
+
+  function popHeaderLogo() {
+    const logo = elements.brandLogo;
+    if (!logo) {
+      return;
+    }
+
+    logo.classList.remove('is-landing');
+    void logo.offsetWidth; // Restart the animation if it is already running.
+    logo.classList.add('is-landing');
+    logo.addEventListener('animationend', () => logo.classList.remove('is-landing'), { once: true });
+  }
+
+  function celebrateLanding() {
+    popHeaderLogo();
+    const markWidth = elements.brandLogo ? getCssSize(elements.brandLogo, 'width') * HEADER_LOGO_CROP.widthRatio : 150;
+    triggerShockwave(getHeaderLogoCenter(), markWidth);
+    queueFireworksShow();
+  }
+
+  // Time's up: the digits blink like a VCR clock, and once the logo is home it docks with a
+  // thud and sets off a fireworks show.
+  function startTimeUpCelebration() {
+    if (!EFFECTS_ENABLED) {
+      return;
+    }
+
+    document.body.classList.remove('time-up');
+    void document.body.offsetWidth; // Restart the blink.
+    document.body.classList.add('time-up');
+
+    if (state.dvdActive) {
+      state.celebrateOnLanding = true; // dvdFrame flies the logo home first.
+    } else {
+      celebrateLanding();
+    }
+  }
+
+  function stopTimeUpCelebration() {
+    document.body.classList.remove('time-up');
+    state.celebrateOnLanding = false;
+    state.fireworksQueue = [];
   }
 
   function reflectUnit(start, velocity, elapsedSeconds) {
@@ -885,6 +1062,10 @@
   }
 
   function updateDvdPhysics(remaining) {
+    if (!state.dvdPath) {
+      return;
+    }
+
     state.dvdPosition = toScreenPoint(getDvdUnitPoint(remaining));
     maybeTriggerPlannedCornerFireworks(remaining);
     maybeTriggerPerfectCornerFireworks();
@@ -928,7 +1109,15 @@
 
   // Visible while running in the window, and frozen in place while paused inside it.
   function shouldShowDvd(remaining) {
-    return isDvdPhaseRange(remaining) && (state.isRunning || state.dvdPath !== null);
+    if (!isDvdPhaseRange(remaining)) {
+      return false;
+    }
+    if (state.dvdPath !== null) {
+      return true;
+    }
+    // A new path needs time to reach the final corner. Without this, a throttled background
+    // tab that jumps from before 40:00 straight into the last seconds would launch with no path.
+    return state.isRunning && remaining > FINAL_CORNER_HIT_SECONDS;
   }
 
   function dvdFrame(now) {
@@ -955,6 +1144,10 @@
     if (state.dvdReturningActive) {
       if (updateDvdReturnAnimation(now)) {
         deactivateDvdPhase();
+        if (state.celebrateOnLanding) {
+          state.celebrateOnLanding = false;
+          celebrateLanding();
+        }
         return;
       }
       scheduleDvdFrame();
@@ -969,6 +1162,12 @@
   }
 
   function activateDvdPhase(enteredFromStart) {
+    const remaining = getRemainingSecondsPrecise();
+    const needsPath = (enteredFromStart || !state.dvdPath) && remaining > FINAL_CORNER_HIT_SECONDS;
+    if (!needsPath && !state.dvdPath) {
+      return;
+    }
+
     const wasActive = state.dvdActive;
     if (!wasActive) {
       state.dvdActive = true;
@@ -977,9 +1176,8 @@
       updateDvdBounds();
     }
 
-    if (enteredFromStart || !state.dvdPath) {
+    if (needsPath) {
       // Lift off from wherever the logo is: the header mark, or mid-flight home.
-      const remaining = getRemainingSecondsPrecise();
       if (!wasActive) {
         state.dvdPosition = getHeaderLogoCenter();
         setDvdScaleImmediate(getHeaderLogoScale());
@@ -1108,6 +1306,10 @@
     renderDocumentTitle();
     syncWakeLock();
     maybePlayMilestoneChimes(remainingPrecise);
+    if (state.remainingSeconds > 0) {
+      // Any way back to time on the clock (reset, restart, mode switch, +1 min) ends the celebration.
+      stopTimeUpCelebration();
+    }
     if (EFFECTS_ENABLED) {
       updateDvdPhase();
       updateDinoScene();
@@ -1168,6 +1370,7 @@
     clearTicking();
     render();
     playEndSound();
+    startTimeUpCelebration();
   }
 
   function tick() {
