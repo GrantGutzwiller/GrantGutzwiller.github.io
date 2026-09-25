@@ -37,40 +37,8 @@ body {
   padding: 1.25rem 1rem 2rem;
 }
 
-.mode-toggle {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: transparent;
-  gap: 0;
-}
-
-.mode-button {
-  border: none;
-  border-right: 1px solid var(--line);
-  background: transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.62rem 1rem;
-  cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-
-.mode-button:last-child {
-  border-right: none;
-}
-
-.mode-button.is-active {
-  background: #ffffff;
-  color: #000000;
-}
-
 .brand {
-  margin-top: 2.8rem;
+  margin-top: 4.8rem;
   text-align: center;
 }
 
@@ -186,17 +154,14 @@ body.fireworks-active .fireworks-layer {
   fill: currentColor;
 }
 
-.sound-off,
-.sound-toggle[aria-pressed="true"] .sound-waves {
-  display: none;
-}
-
+/* Pressed means firework sounds are on. */
+.sound-waves,
 .sound-toggle[aria-pressed="true"] .sound-off {
-  display: inline;
+  display: none;
 }
 
-.timer-mode {
-  display: none;
+.sound-toggle[aria-pressed="true"] .sound-waves {
+  display: inline;
 }
 
 .timer-display {
@@ -345,7 +310,7 @@ body.final-five .timer-status {
   }
 
   .brand {
-    margin-top: 2.2rem;
+    margin-top: 3.6rem;
   }
 
   .controls {
