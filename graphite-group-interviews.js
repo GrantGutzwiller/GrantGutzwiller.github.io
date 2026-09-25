@@ -1,10 +1,81 @@
 (() => {
   const STORAGE_KEY = 'graphite-group-interview-timer-v1';
 
-  const DINO_START_SECONDS = 5 * 60 + 9.45;
-  const DINO_HIT_MS = 9450;
-  const DINO_END_MS = 10000;
-  const DINO_HIDE_AFTER_START_MS = 15000;
+  const FINAL_FIVE_SECONDS = 5 * 60;
+  // The dino run starts with the 5:10 chime and hits a cactus exactly at 5:00. Every frame
+  // is drawn from the time left on the clock, so pausing and reloading keep it in sync.
+  const DINO_RUN_START_SECONDS = 5 * 60 + 10;
+  const DINO_RUN_SECONDS = DINO_RUN_START_SECONDS - FINAL_FIVE_SECONDS;
+  const DINO_SCENE_SECONDS = 16;
+  const DINO_SCENE_OPEN_LEAD_SECONDS = 0.35;
+  const DINO_INTRO_SECONDS = 0.45;
+  const DINO_STEP_SECONDS = 0.1;
+  const DINO_SCENE_HEIGHT = 150;
+  const DINO_X = 39;
+  const DINO_GROUND_Y = 95;
+  // An obstacle "arrives" when its left edge reaches the dino's snout.
+  const DINO_CONTACT_X = 37;
+  const DINO_HORIZON_Y = 131;
+  const DINO_GROUND_LENGTH = 1200;
+  const DINO_JUMP = { height: 70, seconds: 0.55 };
+  // px/s; Chrome's game starts at 6px a frame.
+  const DINO_SPEED = { start: 360, rampSeconds: 0.6, accel: 12 };
+  // Rects in assets/graphite-dino-sprites.png, cut from a recording of Chrome's game; top is
+  // where each sprite sits in the scene.
+  const DINO_SPRITES = {
+    trexRunA: { x: 0, y: 0, w: 40, h: 43 },
+    trexRunB: { x: 42, y: 0, w: 40, h: 43 },
+    trexJump: { x: 84, y: 0, w: 40, h: 43 },
+    trexCrash: { x: 126, y: 0, w: 40, h: 43 },
+    cactusLargeA: { x: 168, y: 0, w: 23, h: 46, top: 91 },
+    cactusLargeB: { x: 193, y: 0, w: 23, h: 46, top: 91 },
+    cactusSmallA: { x: 218, y: 0, w: 15, h: 33, top: 106 },
+    cactusSmallB: { x: 235, y: 0, w: 15, h: 33, top: 106 },
+    cloud: { x: 252, y: 0, w: 46, h: 13 },
+    restart: { x: 300, y: 0, w: 34, h: 30 }
+  };
+  const DINO_OBSTACLES = [
+    { at: 2.3, parts: ['cactusSmallA'] },
+    { at: 4.0, parts: ['cactusLargeB'] },
+    { at: 5.6, parts: ['cactusSmallA', 'cactusSmallB'] },
+    { at: 7.1, parts: ['cactusLargeA'] },
+    { at: 8.5, parts: ['cactusSmallB', 'cactusSmallA', 'cactusSmallB'] },
+    // The one it doesn't jump.
+    { at: DINO_RUN_SECONDS, parts: ['cactusLargeA', 'cactusLargeB'] }
+  ];
+  const DINO_CLOUDS = [
+    { x: 130, y: 38 },
+    { x: 330, y: 28 },
+    { x: 560, y: 52 },
+    { x: 790, y: 30 },
+    { x: 1010, y: 46 }
+  ];
+  const DINO_CLOUD_SPAN = 1150;
+  const DINO_CLOUD_PARALLAX = 0.2;
+  const DINO_MESSAGE = '5 MINUTES LEFT';
+  const DINO_EDGE_FADE = 28;
+  const PIXEL_FONT = {
+    '0': ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+    '1': ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
+    '2': ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'],
+    '3': ['####.', '....#', '....#', '.###.', '....#', '....#', '####.'],
+    '4': ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'],
+    '5': ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
+    '6': ['.###.', '#....', '#....', '####.', '#...#', '#...#', '.###.'],
+    '7': ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'],
+    '8': ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'],
+    '9': ['.###.', '#...#', '#...#', '.####', '....#', '....#', '.###.'],
+    E: ['#####', '#....', '#....', '####.', '#....', '#....', '#####'],
+    F: ['#####', '#....', '#....', '####.', '#....', '#....', '#....'],
+    H: ['#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+    I: ['.###.', '..#..', '..#..', '..#..', '..#..', '..#..', '.###.'],
+    L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
+    M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'],
+    N: ['#...#', '##..#', '#.#.#', '#..##', '#...#', '#...#', '#...#'],
+    S: ['.####', '#....', '#....', '.###.', '....#', '....#', '####.'],
+    T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
+    U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.']
+  };
   const CASE_WORK_MILESTONE_SECONDS = [15 * 60, 5 * 60 + 10, 60];
 
   const DVD_START_SECONDS = 40 * 60;
@@ -57,10 +128,11 @@
     wakeLockRequest: null,
     wakeLockDenied: false,
 
-    dinoEndTimeoutId: null,
-    dinoOverlayTimeoutId: null,
-    dinoHideTimeoutId: null,
-    dinoSequenceStarted: false,
+    dinoSceneOpen: false,
+    dinoRafId: null,
+    dinoContext: null,
+    dinoCanvasWidth: 0,
+    dinoGround: null,
 
     dvdActive: false,
     dvdPath: null,
@@ -111,8 +183,9 @@
     dvdLogoFloating: document.getElementById('dvdLogoFloating'),
     fireworksLayer: document.getElementById('fireworksLayer'),
 
-    dinoGifWrap: document.querySelector('.dino-gif-wrap'),
-    dinoGif: document.querySelector('.dino-gif')
+    dinoScene: document.getElementById('dinoScene'),
+    dinoCanvas: document.getElementById('dinoCanvas'),
+    dinoSprites: document.getElementById('dinoSprites')
   };
 
   const BASE_TITLE = document.title;
@@ -156,7 +229,7 @@
 
   function isFinalFiveCaseWork() {
     const remaining = getRemainingSecondsPrecise();
-    return state.isRunning && state.mode === 'caseWork' && remaining > 0 && remaining <= DINO_START_SECONDS;
+    return state.isRunning && state.mode === 'caseWork' && remaining > 0 && remaining <= FINAL_FIVE_SECONDS;
   }
 
   function isDvdPhaseRange(remaining) {
@@ -346,73 +419,301 @@
     state.lastMilestoneRemainingPrecise = remainingPrecise;
   }
 
-  function resetDinoScene() {
-    if (state.dinoEndTimeoutId !== null) {
-      window.clearTimeout(state.dinoEndTimeoutId);
-      state.dinoEndTimeoutId = null;
+  function getDinoSpeed(t) {
+    const { start, rampSeconds, accel } = DINO_SPEED;
+    if (t <= 0) {
+      return 0;
     }
-    if (state.dinoOverlayTimeoutId !== null) {
-      window.clearTimeout(state.dinoOverlayTimeoutId);
-      state.dinoOverlayTimeoutId = null;
+    if (t <= rampSeconds) {
+      return (start * t) / rampSeconds;
     }
-    if (state.dinoHideTimeoutId !== null) {
-      window.clearTimeout(state.dinoHideTimeoutId);
-      state.dinoHideTimeoutId = null;
-    }
-    state.dinoSequenceStarted = false;
+    return start + accel * (t - rampSeconds);
+  }
 
-    if (elements.dinoGifWrap) {
-      elements.dinoGifWrap.classList.remove('show-overlay');
-      elements.dinoGifWrap.classList.remove('dino-ended');
-      elements.dinoGifWrap.classList.remove('dino-hidden');
+  function getDinoDistance(t) {
+    const { start, rampSeconds, accel } = DINO_SPEED;
+    if (t <= 0) {
+      return 0;
+    }
+    if (t <= rampSeconds) {
+      return (start * t * t) / (2 * rampSeconds);
+    }
+    const cruise = t - rampSeconds;
+    return (start * rampSeconds) / 2 + start * cruise + (accel * cruise * cruise) / 2;
+  }
+
+  function getObstacleWidth(obstacle) {
+    return obstacle.parts.reduce((width, part) => width + DINO_SPRITES[part].w, 0) + obstacle.parts.length - 1;
+  }
+
+  // One intro hop at the start, then a jump over every obstacle but the last, timed so the top
+  // of the arc lines up with the middle of the obstacle passing underneath.
+  function getDinoJumpHeight(t) {
+    const starts = [0];
+    DINO_OBSTACLES.forEach((obstacle) => {
+      if (obstacle.at < DINO_RUN_SECONDS) {
+        const passSeconds = (getObstacleWidth(obstacle) + DINO_CONTACT_X) / getDinoSpeed(obstacle.at);
+        starts.push(obstacle.at + passSeconds / 2 - DINO_JUMP.seconds / 2);
+      }
+    });
+
+    const start = starts.find((jumpStart) => t >= jumpStart && t < jumpStart + DINO_JUMP.seconds);
+    if (start === undefined) {
+      return 0;
+    }
+    const progress = (t - start) / DINO_JUMP.seconds;
+    return 4 * DINO_JUMP.height * progress * (1 - progress);
+  }
+
+  function buildDinoGround() {
+    const strip = document.createElement('canvas');
+    strip.width = DINO_GROUND_LENGTH;
+    strip.height = 10;
+    const ctx = strip.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+
+    // A fixed seed keeps the same ground under every run.
+    let seed = 0x5eed;
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    // The horizon sits on row 2, with the odd bump and dip like Chrome's.
+    let x = 0;
+    while (x < DINO_GROUND_LENGTH) {
+      const roll = random();
+      if (roll < 0.035 && x < DINO_GROUND_LENGTH - 8) {
+        ctx.fillRect(x, 2, 1, 1);
+        ctx.fillRect(x + 1, 1, 1, 1);
+        ctx.fillRect(x + 2, 0, 3, 1);
+        ctx.fillRect(x + 5, 1, 1, 1);
+        ctx.fillRect(x + 6, 2, 1, 1);
+        x += 7;
+      } else if (roll < 0.06 && x < DINO_GROUND_LENGTH - 7) {
+        ctx.fillRect(x, 2, 1, 1);
+        ctx.fillRect(x + 1, 3, 4, 1);
+        ctx.fillRect(x + 5, 2, 1, 1);
+        x += 6;
+      } else {
+        ctx.fillRect(x, 2, 1, 1);
+        x += 1;
+      }
+    }
+
+    for (let i = 0; i < DINO_GROUND_LENGTH / 9; i += 1) {
+      const length = 1 + Math.floor(random() * 3);
+      ctx.fillRect(Math.floor(random() * (DINO_GROUND_LENGTH - length)), 4 + Math.floor(random() * 5), length, 1);
+    }
+
+    return strip;
+  }
+
+  function sizeDinoCanvas() {
+    const canvas = elements.dinoCanvas;
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.round(canvas.clientWidth));
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(DINO_SCENE_HEIGHT * dpr);
+    state.dinoCanvasWidth = width;
+    state.dinoContext = canvas.getContext('2d');
+    state.dinoContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    state.dinoContext.imageSmoothingEnabled = false;
+  }
+
+  function drawDinoSprite(ctx, name, x, y) {
+    const sprite = DINO_SPRITES[name];
+    ctx.drawImage(elements.dinoSprites, sprite.x, sprite.y, sprite.w, sprite.h, Math.round(x), Math.round(y), sprite.w, sprite.h);
+  }
+
+  function getPixelTextWidth(text, scale, gap) {
+    return text.length * 5 * scale + (text.length - 1) * gap;
+  }
+
+  function drawPixelText(ctx, text, x, y, scale, gap) {
+    let cursor = Math.round(x);
+    for (const char of text) {
+      const glyph = PIXEL_FONT[char];
+      if (glyph) {
+        glyph.forEach((row, glyphY) => {
+          for (let glyphX = 0; glyphX < row.length; glyphX += 1) {
+            if (row[glyphX] === '#') {
+              ctx.fillRect(cursor + glyphX * scale, y + glyphY * scale, scale, scale);
+            }
+          }
+        });
+      }
+      cursor += 5 * scale + gap;
     }
   }
 
-  function startDinoSequence() {
-    if (!elements.dinoGifWrap || !elements.dinoGif || state.dinoSequenceStarted) {
+  function drawDinoScene(sceneSeconds) {
+    const ctx = state.dinoContext;
+    const sprites = elements.dinoSprites;
+    if (!ctx || !sprites || !sprites.complete || sprites.naturalWidth === 0) {
       return;
     }
 
-    state.dinoSequenceStarted = true;
-    elements.dinoGifWrap.classList.remove('show-overlay');
-    elements.dinoGifWrap.classList.remove('dino-ended');
-    elements.dinoGifWrap.classList.remove('dino-hidden');
+    if (!state.dinoGround) {
+      state.dinoGround = buildDinoGround();
+    }
 
-    const cleanSrc = elements.dinoGif.src.split('?')[0];
-    elements.dinoGif.src = `${cleanSrc}?v=${Date.now()}`;
+    const width = state.dinoCanvasWidth;
+    const t = Math.max(0, Math.min(sceneSeconds, DINO_RUN_SECONDS));
+    const crashed = sceneSeconds >= DINO_RUN_SECONDS;
+    const distance = getDinoDistance(t);
 
-    state.dinoOverlayTimeoutId = window.setTimeout(() => {
-      if (!isFinalFiveCaseWork()) {
+    const score = String(Math.floor(distance * 0.025)).padStart(5, '0');
+    // After the crash Chrome shows the high score too, dimmer than the current one.
+    const highScore = crashed ? `HI ${score} ` : '';
+    const scoreWidth = getPixelTextWidth(highScore + score, 2, 2);
+    const scoreX = width - 10 - scoreWidth;
+    const messageWidth = getPixelTextWidth(DINO_MESSAGE, 2, 6);
+    const messageX = (width - messageWidth) / 2;
+    const restartX = (width - DINO_SPRITES.restart.w) / 2;
+    const textZones = [
+      [scoreX, 8, scoreWidth, 14],
+      [messageX, 34, messageWidth, 14],
+      [restartX, 64, DINO_SPRITES.restart.w, DINO_SPRITES.restart.h]
+    ];
+
+    ctx.clearRect(0, 0, width, DINO_SCENE_HEIGHT);
+    ctx.save();
+
+    // Like Chrome's intro, the world opens out from the dino as it takes its first hop.
+    const reveal = Math.min(1, t / DINO_INTRO_SECONDS);
+    if (reveal < 1) {
+      const revealStart = DINO_X + DINO_SPRITES.trexJump.w;
+      ctx.beginPath();
+      ctx.rect(0, 0, revealStart + (width - revealStart) * easeInOutCubic(reveal), DINO_SCENE_HEIGHT);
+      ctx.clip();
+    }
+
+    // Clouds fly below the score. Once the world freezes, any cloud under the message or the
+    // restart icon is left out so they read cleanly.
+    ctx.globalAlpha = 0.28;
+    DINO_CLOUDS.forEach((cloud) => {
+      const x = (((cloud.x - distance * DINO_CLOUD_PARALLAX) % DINO_CLOUD_SPAN) + DINO_CLOUD_SPAN) % DINO_CLOUD_SPAN - DINO_SPRITES.cloud.w;
+      const blocksText = crashed && textZones.some(([zoneX, zoneY, zoneW, zoneH]) => (
+        x < zoneX + zoneW + 6 && x + DINO_SPRITES.cloud.w > zoneX - 6 &&
+        cloud.y < zoneY + zoneH + 6 && cloud.y + DINO_SPRITES.cloud.h > zoneY - 6
+      ));
+      if (x < width && !blocksText) {
+        drawDinoSprite(ctx, 'cloud', x, cloud.y);
+      }
+    });
+
+    ctx.globalAlpha = 0.7;
+    const groundOffset = distance % DINO_GROUND_LENGTH;
+    for (let x = -groundOffset; x < width; x += DINO_GROUND_LENGTH) {
+      ctx.drawImage(state.dinoGround, Math.round(x), DINO_HORIZON_Y - 2);
+    }
+
+    ctx.globalAlpha = 0.92;
+    DINO_OBSTACLES.forEach((obstacle) => {
+      let x = DINO_X + DINO_CONTACT_X + getDinoDistance(obstacle.at) - distance;
+      if (x > width || x + getObstacleWidth(obstacle) < 0) {
         return;
       }
-      elements.dinoGifWrap.classList.add('show-overlay');
-      state.dinoOverlayTimeoutId = null;
-    }, DINO_HIT_MS);
+      obstacle.parts.forEach((part) => {
+        drawDinoSprite(ctx, part, x, DINO_SPRITES[part].top);
+        x += DINO_SPRITES[part].w + 1;
+      });
+    });
 
-    state.dinoEndTimeoutId = window.setTimeout(() => {
-      if (!isFinalFiveCaseWork()) {
-        return;
-      }
-      elements.dinoGifWrap.classList.add('dino-ended');
-      state.dinoEndTimeoutId = null;
-    }, DINO_END_MS);
+    const jumpHeight = getDinoJumpHeight(t);
+    let trex = Math.floor(t / DINO_STEP_SECONDS) % 2 === 0 ? 'trexRunA' : 'trexRunB';
+    if (crashed) {
+      trex = 'trexCrash';
+    } else if (sceneSeconds <= 0 || jumpHeight > 0) {
+      trex = 'trexJump';
+    }
+    drawDinoSprite(ctx, trex, DINO_X, DINO_GROUND_Y - jumpHeight);
 
-    state.dinoHideTimeoutId = window.setTimeout(() => {
-      if (!isFinalFiveCaseWork()) {
-        return;
-      }
-      elements.dinoGifWrap.classList.add('dino-hidden');
-      state.dinoHideTimeoutId = null;
-    }, DINO_HIDE_AFTER_START_MS);
+    // The scene has no frame, so the world fades out at its edges instead of being cut off.
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'destination-out';
+    [[0, DINO_EDGE_FADE], [width, width - DINO_EDGE_FADE]].forEach(([edge, inner]) => {
+      const fade = ctx.createLinearGradient(edge, 0, inner, 0);
+      fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      fade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = fade;
+      ctx.fillRect(Math.min(edge, inner), 0, DINO_EDGE_FADE, DINO_SCENE_HEIGHT);
+    });
+    ctx.restore();
+
+    if (reveal < 1) {
+      return;
+    }
+
+    ctx.fillStyle = 'rgba(242, 242, 242, 0.5)';
+    drawPixelText(ctx, highScore, scoreX, 8, 2, 2);
+    ctx.fillStyle = 'rgba(242, 242, 242, 0.92)';
+    drawPixelText(ctx, score, scoreX + highScore.length * 12, 8, 2, 2);
+
+    if (crashed) {
+      // Where Chrome says GAME OVER.
+      drawPixelText(ctx, DINO_MESSAGE, messageX, 34, 2, 6);
+      ctx.globalAlpha = 0.92;
+      drawDinoSprite(ctx, 'restart', restartX, 64);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function stopDinoLoop() {
+    if (state.dinoRafId !== null) {
+      window.cancelAnimationFrame(state.dinoRafId);
+      state.dinoRafId = null;
+    }
+  }
+
+  function scheduleDinoFrame() {
+    if (state.dinoRafId === null) {
+      state.dinoRafId = window.requestAnimationFrame(() => {
+        state.dinoRafId = null;
+        updateDinoScene();
+      });
+    }
+  }
+
+  function getDinoSceneSeconds() {
+    return DINO_RUN_START_SECONDS - getRemainingSecondsPrecise();
+  }
+
+  // Shown in Case Work from 5:10 to 4:54 while the timer runs, and frozen in place while paused there.
+  function shouldShowDinoScene(sceneSeconds) {
+    const hasStarted = state.isRunning || isFiniteNumber(state.pausedRemainingPrecise);
+    return (
+      Boolean(elements.dinoScene) &&
+      state.mode === 'caseWork' &&
+      hasStarted &&
+      sceneSeconds >= -DINO_SCENE_OPEN_LEAD_SECONDS &&
+      sceneSeconds < DINO_SCENE_SECONDS
+    );
   }
 
   function updateDinoScene() {
-    if (isFinalFiveCaseWork()) {
-      startDinoSequence();
+    const sceneSeconds = getDinoSceneSeconds();
+    const shouldShow = shouldShowDinoScene(sceneSeconds);
+
+    if (shouldShow !== state.dinoSceneOpen) {
+      state.dinoSceneOpen = shouldShow;
+      elements.dinoScene.classList.toggle('is-open', shouldShow);
+      if (shouldShow) {
+        sizeDinoCanvas();
+      }
+    }
+
+    if (!shouldShow) {
+      stopDinoLoop();
       return;
     }
 
-    resetDinoScene();
+    drawDinoScene(sceneSeconds);
+    if (state.isRunning) {
+      scheduleDinoFrame();
+    }
   }
 
   function clampUnit(value) {
@@ -1222,6 +1523,11 @@
   function handleViewportChange() {
     resizeFireworksCanvas();
 
+    if (state.dinoSceneOpen) {
+      sizeDinoCanvas();
+      drawDinoScene(getDinoSceneSeconds());
+    }
+
     if (!state.dvdActive) {
       return;
     }
@@ -1539,6 +1845,10 @@
     });
 
     document.addEventListener('keydown', handleShortcut);
+
+    if (EFFECTS_ENABLED && elements.dinoSprites) {
+      elements.dinoSprites.addEventListener('load', updateDinoScene);
+    }
   }
 
   restoreState();
