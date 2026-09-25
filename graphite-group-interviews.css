@@ -100,6 +100,8 @@ body.dvd-active .brand-logo {
   pointer-events: none;
   z-index: 70;
   display: none;
+  /* The logo inverts whatever it crosses, so the countdown stays readable underneath it. */
+  mix-blend-mode: difference;
 }
 
 body.dvd-active .dvd-logo-layer {
@@ -108,13 +110,13 @@ body.dvd-active .dvd-logo-layer {
 
 .dvd-logo {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: 0;
+  top: 0;
   width: min(220px, 56vw);
   height: auto;
   transform: translate(-50%, -50%);
   filter: brightness(0) invert(1);
-  will-change: left, top;
+  will-change: transform;
 }
 
 .fireworks-layer {

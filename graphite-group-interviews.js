@@ -11,10 +11,7 @@
   const CORNER_HIT_SECONDS = 16 * 60;
   const DVD_END_SECONDS = 0;
   const FINAL_CORNER_HIT_SECONDS = 2;
-  const FINAL_SEGMENT_DURATION_SECONDS = CORNER_HIT_SECONDS - FINAL_CORNER_HIT_SECONDS;
-  const PRE_HIT_SEGMENT_DURATION_SECONDS = DVD_START_SECONDS - CORNER_HIT_SECONDS;
-  const DVD_BASE_SPEED = 260;
-  const DVD_SAFE_MARGIN = 8;
+  const DVD_EDGE_MARGIN = 0;
   const DVD_RETURN_DURATION_MS = 1400;
   const DVD_MIN_SCALE = 0.34;
   const DVD_MAX_SCALE = 1;
@@ -23,8 +20,15 @@
   const DVD_PRE_HIT_VY = 153;
   const DVD_POST_HIT_VX = 232;
   const DVD_POST_HIT_VY = 171;
+  const DVD_CORNER_HITS = [
+    { remainingSeconds: CORNER_HIT_SECONDS, speedX: DVD_PRE_HIT_VX, speedY: DVD_PRE_HIT_VY },
+    { remainingSeconds: FINAL_CORNER_HIT_SECONDS, speedX: DVD_POST_HIT_VX, speedY: DVD_POST_HIT_VY }
+  ];
+  // graphite-logo-tight.png is graphite-logo-black-256.png cropped to the mark.
+  const HEADER_LOGO_CROP = { widthRatio: 176 / 256, centerYRatio: 131 / 256 };
   const PERFECT_CORNER_TOLERANCE_PX = 0.8;
   const CORNER_FIREWORK_COOLDOWN_MS = 180;
+  const MAX_CORNER_HIT_STEP_SECONDS = 1;
 
   const FIREWORK_PARTICLE_COUNT = 34;
   const FIREWORK_DURATION_MS = 780;
@@ -41,8 +45,12 @@
     remainingSeconds: MODES.caseWork.durationSeconds,
     isRunning: false,
     endTimeMs: 0,
+    pausedRemainingPrecise: null,
     intervalId: null,
     audioContext: null,
+    wakeLock: null,
+    wakeLockRequest: null,
+    wakeLockDenied: false,
 
     dinoEndTimeoutId: null,
     dinoOverlayTimeoutId: null,
@@ -50,24 +58,16 @@
     dinoSequenceStarted: false,
 
     dvdActive: false,
+    dvdPath: null,
     dvdPosition: { x: 0, y: 0 },
-    dvdVelocity: { vx: DVD_BASE_SPEED, vy: DVD_BASE_SPEED * 0.72 },
-    dvdSize: { w: 180, h: 180 },
+    dvdSize: { w: 75, h: 86 },
     dvdBounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 },
     dvdRafId: null,
-    dvdLastFrameMs: null,
-    dvdCornerTarget: null,
-    dvdPreSegmentVelocity: null,
-    dvdCornerHitTriggered: false,
-    dvdFinalCornerTarget: null,
-    dvdFinalCornerHitTriggered: false,
-    dvdPostSegmentVelocity: null,
     lastRemainingPrecise: null,
     dvdReturningActive: false,
     dvdReturnStartMs: null,
     dvdReturnFrom: null,
     dvdReturnTo: null,
-    dvdStartAnchor: null,
     dvdScale: DVD_MAX_SCALE,
     dvdScaleAnimating: false,
     dvdScaleTweenStartMs: null,
@@ -81,7 +81,9 @@
 
     fireworksActive: false,
     fireworksParticles: [],
-    fireworksContext: null
+    fireworksContext: null,
+    fireworksRafId: null,
+    fireworksLastFrameMs: null
   };
 
   const elements = {
@@ -104,6 +106,8 @@
     dinoGifWrap: document.querySelector('.dino-gif-wrap'),
     dinoGif: document.querySelector('.dino-gif')
   };
+
+  const BASE_TITLE = document.title;
 
   function isFiniteNumber(value) {
     return typeof value === 'number' && Number.isFinite(value);
@@ -133,6 +137,10 @@
     if (state.isRunning && state.endTimeMs > 0) {
       return Math.max(0, (state.endTimeMs - Date.now()) / 1000);
     }
+    // While paused, keep the sub-second remainder the display rounds away.
+    if (isFiniteNumber(state.pausedRemainingPrecise) && Math.ceil(state.pausedRemainingPrecise) === state.remainingSeconds) {
+      return state.pausedRemainingPrecise;
+    }
     return state.remainingSeconds;
   }
 
@@ -145,27 +153,19 @@
     return state.mode === 'caseWork' && remaining <= DVD_START_SECONDS && remaining > DVD_END_SECONDS;
   }
 
-  function isDvdPhaseActive() {
-    const remaining = getRemainingSecondsPrecise();
-    return state.isRunning && isDvdPhaseRange(remaining);
+  function isUnitPoint(point) {
+    return Boolean(point) && isFiniteNumber(point.u) && isFiniteNumber(point.v);
   }
 
-  function isCornerHitMoment(remaining) {
-    return (
-      !state.dvdCornerHitTriggered &&
-      state.lastRemainingPrecise !== null &&
-      state.lastRemainingPrecise > CORNER_HIT_SECONDS &&
-      remaining <= CORNER_HIT_SECONDS
-    );
-  }
-
-  function isFinalCornerHitMoment(remaining) {
-    return (
-      !state.dvdFinalCornerHitTriggered &&
-      state.lastRemainingPrecise !== null &&
-      state.lastRemainingPrecise > FINAL_CORNER_HIT_SECONDS &&
-      remaining <= FINAL_CORNER_HIT_SECONDS
-    );
+  function isValidDvdPath(path) {
+    return Array.isArray(path) && path.length > 0 && path.every((segment) => (
+      Boolean(segment) &&
+      isFiniteNumber(segment.startRemaining) &&
+      isFiniteNumber(segment.endRemaining) &&
+      isUnitPoint(segment.start) &&
+      isUnitPoint(segment.velocity) &&
+      isUnitPoint(segment.end)
+    ));
   }
 
   function persistState() {
@@ -177,18 +177,9 @@
           remainingSeconds: state.remainingSeconds,
           isRunning: state.isRunning,
           endTimeMs: state.endTimeMs,
+          pausedRemainingPrecise: state.pausedRemainingPrecise,
           dvd: {
-            active: state.dvdActive,
-            position: state.dvdPosition,
-            velocity: state.dvdVelocity,
-            cornerTarget: state.dvdCornerTarget,
-            preSegmentVelocity: state.dvdPreSegmentVelocity,
-            cornerHitTriggered: state.dvdCornerHitTriggered,
-            finalCornerHitTriggered: state.dvdFinalCornerHitTriggered,
-            finalCornerTarget: state.dvdFinalCornerTarget,
-            postSegmentVelocity: state.dvdPostSegmentVelocity,
-            scale: state.dvdScale,
-            startAnchor: state.dvdStartAnchor
+            path: state.dvdPath
           }
         })
       );
@@ -223,80 +214,13 @@
         }
       } else if (state.remainingSeconds === 0) {
         state.remainingSeconds = getModeDuration();
+      } else if (isFiniteNumber(saved.pausedRemainingPrecise)) {
+        state.pausedRemainingPrecise = saved.pausedRemainingPrecise;
       }
 
-      if (saved.dvd && typeof saved.dvd === 'object') {
-        const position = saved.dvd.position || {};
-        const velocity = saved.dvd.velocity || {};
-
-        if (isFiniteNumber(position.x) && isFiniteNumber(position.y)) {
-          state.dvdPosition = { x: position.x, y: position.y };
-        }
-
-        if (isFiniteNumber(velocity.vx) && isFiniteNumber(velocity.vy)) {
-          state.dvdVelocity = { vx: velocity.vx, vy: velocity.vy };
-        }
-
-        if (
-          saved.dvd.cornerTarget &&
-          isFiniteNumber(saved.dvd.cornerTarget.x) &&
-          isFiniteNumber(saved.dvd.cornerTarget.y)
-        ) {
-          state.dvdCornerTarget = {
-            x: saved.dvd.cornerTarget.x,
-            y: saved.dvd.cornerTarget.y
-          };
-        }
-
-        if (
-          saved.dvd.preSegmentVelocity &&
-          isFiniteNumber(saved.dvd.preSegmentVelocity.vx) &&
-          isFiniteNumber(saved.dvd.preSegmentVelocity.vy)
-        ) {
-          state.dvdPreSegmentVelocity = {
-            vx: saved.dvd.preSegmentVelocity.vx,
-            vy: saved.dvd.preSegmentVelocity.vy
-          };
-        }
-
-        state.dvdCornerHitTriggered = Boolean(saved.dvd.cornerHitTriggered);
-        state.dvdFinalCornerHitTriggered = Boolean(saved.dvd.finalCornerHitTriggered);
-
-        if (
-          saved.dvd.finalCornerTarget &&
-          isFiniteNumber(saved.dvd.finalCornerTarget.x) &&
-          isFiniteNumber(saved.dvd.finalCornerTarget.y)
-        ) {
-          state.dvdFinalCornerTarget = {
-            x: saved.dvd.finalCornerTarget.x,
-            y: saved.dvd.finalCornerTarget.y
-          };
-        }
-
-        if (
-          saved.dvd.postSegmentVelocity &&
-          isFiniteNumber(saved.dvd.postSegmentVelocity.vx) &&
-          isFiniteNumber(saved.dvd.postSegmentVelocity.vy)
-        ) {
-          state.dvdPostSegmentVelocity = {
-            vx: saved.dvd.postSegmentVelocity.vx,
-            vy: saved.dvd.postSegmentVelocity.vy
-          };
-        }
-
-        if (isFiniteNumber(saved.dvd.scale)) {
-          setDvdScaleImmediate(saved.dvd.scale);
-        } else {
-          setDvdScaleImmediate(DVD_MIN_SCALE);
-        }
-
-        if (
-          saved.dvd.startAnchor &&
-          isFiniteNumber(saved.dvd.startAnchor.x) &&
-          isFiniteNumber(saved.dvd.startAnchor.y)
-        ) {
-          state.dvdStartAnchor = { x: saved.dvd.startAnchor.x, y: saved.dvd.startAnchor.y };
-        }
+      // Paths saved by older versions were in pixels; those are dropped and re-planned.
+      if (saved.dvd && isValidDvdPath(saved.dvd.path)) {
+        state.dvdPath = saved.dvd.path;
       }
     } catch (error) {
       // Ignore malformed cached state.
@@ -481,23 +405,43 @@
     resetDinoScene();
   }
 
+  function clampUnit(value) {
+    return Math.max(0, Math.min(1, value));
+  }
+
+  function getViewportSize() {
+    const root = document.documentElement;
+    return {
+      w: root.clientWidth || window.innerWidth,
+      h: root.clientHeight || window.innerHeight
+    };
+  }
+
+  function getCssSize(element, property) {
+    const size = parseFloat(window.getComputedStyle(element)[property]);
+    return isFiniteNumber(size) ? size : 0;
+  }
+
   function updateDvdSize() {
     if (!elements.dvdLogoFloating) {
       return;
     }
 
-    const rect = elements.dvdLogoFloating.getBoundingClientRect();
-    const width = rect.width || Math.min(window.innerWidth * 0.56, 220);
-    const height = rect.height || width;
-    state.dvdSize = { w: width, h: height };
+    // The CSS size ignores the scale transform and, unlike offsetHeight, keeps
+    // fractional pixels. The logo always bounces at DVD_MIN_SCALE.
+    const logo = elements.dvdLogoFloating;
+    const width = getCssSize(logo, 'width') || Math.min(window.innerWidth * 0.56, 220);
+    const aspect = logo.naturalWidth > 0 ? logo.naturalHeight / logo.naturalWidth : 1;
+    const height = getCssSize(logo, 'height') || width * aspect;
+    state.dvdSize = { w: width * DVD_MIN_SCALE, h: height * DVD_MIN_SCALE };
   }
 
   function updateDvdBounds() {
-    const margin = Math.max(DVD_SAFE_MARGIN, window.innerWidth * 0.008);
-    const minX = margin + state.dvdSize.w / 2;
-    const maxX = window.innerWidth - margin - state.dvdSize.w / 2;
-    const minY = margin + state.dvdSize.h / 2;
-    const maxY = window.innerHeight - margin - state.dvdSize.h / 2;
+    const viewport = getViewportSize();
+    const minX = DVD_EDGE_MARGIN + state.dvdSize.w / 2;
+    const maxX = viewport.w - DVD_EDGE_MARGIN - state.dvdSize.w / 2;
+    const minY = DVD_EDGE_MARGIN + state.dvdSize.h / 2;
+    const maxY = viewport.h - DVD_EDGE_MARGIN - state.dvdSize.h / 2;
 
     state.dvdBounds = {
       minX,
@@ -507,9 +451,22 @@
     };
   }
 
-  function clampDvdPosition() {
-    state.dvdPosition.x = Math.max(state.dvdBounds.minX, Math.min(state.dvdBounds.maxX, state.dvdPosition.x));
-    state.dvdPosition.y = Math.max(state.dvdBounds.minY, Math.min(state.dvdBounds.maxY, state.dvdPosition.y));
+  // The path is planned in unit coordinates (0 to 1 across the bounce area), so the
+  // corner hits stay exact when the viewport changes size mid-run.
+  function toScreenPoint(point) {
+    const { minX, maxX, minY, maxY } = state.dvdBounds;
+    return {
+      x: minX + point.u * (maxX - minX),
+      y: minY + point.v * (maxY - minY)
+    };
+  }
+
+  function toUnitPoint(point) {
+    const { minX, maxX, minY, maxY } = state.dvdBounds;
+    return {
+      u: maxX > minX ? clampUnit((point.x - minX) / (maxX - minX)) : 0,
+      v: maxY > minY ? clampUnit((point.y - minY) / (maxY - minY)) : 0
+    };
   }
 
   function applyDvdPosition() {
@@ -517,29 +474,30 @@
       return;
     }
 
-    elements.dvdLogoFloating.style.left = `${state.dvdPosition.x}px`;
-    elements.dvdLogoFloating.style.top = `${state.dvdPosition.y}px`;
-    elements.dvdLogoFloating.style.transform = `translate(-50%, -50%) scale(${state.dvdScale})`;
+    elements.dvdLogoFloating.style.transform = (
+      `translate3d(${state.dvdPosition.x}px, ${state.dvdPosition.y}px, 0) translate(-50%, -50%) scale(${state.dvdScale})`
+    );
   }
 
   function getHeaderLogoCenter() {
     if (elements.brandLogo) {
       const rect = elements.brandLogo.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height * HEADER_LOGO_CROP.centerYRatio };
       }
     }
 
     return { x: window.innerWidth / 2, y: Math.max(120, window.innerHeight * 0.16) };
   }
 
-  function getCornerPoints() {
-    return [
-      { x: state.dvdBounds.minX, y: state.dvdBounds.minY },
-      { x: state.dvdBounds.maxX, y: state.dvdBounds.minY },
-      { x: state.dvdBounds.minX, y: state.dvdBounds.maxY },
-      { x: state.dvdBounds.maxX, y: state.dvdBounds.maxY }
-    ];
+  function getHeaderLogoScale() {
+    // The scale at which the floating logo exactly covers the header mark.
+    const headerWidth = elements.brandLogo ? getCssSize(elements.brandLogo, 'width') : 0;
+    const logoWidth = elements.dvdLogoFloating ? getCssSize(elements.dvdLogoFloating, 'width') : 0;
+    if (headerWidth > 0 && logoWidth > 0) {
+      return (headerWidth * HEADER_LOGO_CROP.widthRatio) / logoWidth;
+    }
+    return DVD_MAX_SCALE;
   }
 
   function easeInOutCubic(t) {
@@ -583,7 +541,7 @@
   }
 
   function startDvdReturnAnimation(now) {
-    if (!state.dvdActive) {
+    if (!state.dvdActive || state.dvdReturningActive) {
       return;
     }
 
@@ -591,8 +549,14 @@
     state.dvdReturnStartMs = now;
     state.dvdReturnFrom = { x: state.dvdPosition.x, y: state.dvdPosition.y };
     state.dvdReturnTo = getHeaderLogoCenter();
-    state.dvdCornerTarget = null;
-    beginDvdScaleTween(DVD_MAX_SCALE, DVD_RETURN_DURATION_MS, now);
+    beginDvdScaleTween(getHeaderLogoScale(), DVD_RETURN_DURATION_MS, now);
+  }
+
+  function cancelDvdReturnAnimation() {
+    state.dvdReturningActive = false;
+    state.dvdReturnStartMs = null;
+    state.dvdReturnFrom = null;
+    state.dvdReturnTo = null;
   }
 
   function updateDvdReturnAnimation(now) {
@@ -609,10 +573,7 @@
     applyDvdPosition();
 
     if (t >= 1) {
-      state.dvdReturningActive = false;
-      state.dvdReturnStartMs = null;
-      state.dvdReturnFrom = null;
-      state.dvdReturnTo = null;
+      cancelDvdReturnAnimation();
       return true;
     }
 
@@ -623,6 +584,12 @@
     state.fireworksParticles = [];
     state.fireworksActive = false;
     document.body.classList.remove('fireworks-active');
+
+    if (state.fireworksRafId !== null) {
+      window.cancelAnimationFrame(state.fireworksRafId);
+      state.fireworksRafId = null;
+    }
+    state.fireworksLastFrameMs = null;
 
     if (state.fireworksContext) {
       state.fireworksContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -659,18 +626,21 @@
     const durationMs = isFiniteNumber(options.durationMs) ? Math.max(80, options.durationMs) : FIREWORK_DURATION_MS;
     const speedMultiplier = isFiniteNumber(options.speedMultiplier) ? options.speedMultiplier : 1;
     const sizeMultiplier = isFiniteNumber(options.sizeMultiplier) ? options.sizeMultiplier : 1;
+    // A direction confines the burst to one quadrant, e.g. back into the screen from a corner.
+    const direction = options.direction || null;
+    const arc = direction ? Math.PI / 2 : Math.PI * 2;
 
     resizeFireworksCanvas();
     state.fireworksParticles = [];
 
     for (let i = 0; i < particleCount; i += 1) {
-      const angle = Math.random() * Math.PI * 2;
+      const angle = Math.random() * arc;
       const speed = (95 + Math.random() * 220) * speedMultiplier;
       state.fireworksParticles.push({
         x,
         y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
+        vx: Math.cos(angle) * speed * (direction ? direction.x : 1),
+        vy: Math.sin(angle) * speed * (direction ? direction.y : 1),
         ageMs: 0,
         durationMs: durationMs * (0.82 + Math.random() * 0.38),
         size: (1.2 + Math.random() * 2.1) * sizeMultiplier
@@ -679,6 +649,11 @@
 
     state.fireworksActive = true;
     document.body.classList.add('fireworks-active');
+
+    if (state.fireworksRafId === null) {
+      state.fireworksLastFrameMs = null;
+      state.fireworksRafId = window.requestAnimationFrame(fireworksFrame);
+    }
   }
 
   function updateFireworks(deltaSec) {
@@ -713,184 +688,125 @@
     }
   }
 
-  function reflectAxis(start, velocity, elapsedSeconds, min, max) {
-    const span = Math.max(0, max - min);
-    if (span <= 0) {
-      return min;
+  // Fireworks run on their own loop so they finish even while the logo flies home or the timer is paused.
+  function fireworksFrame(now) {
+    state.fireworksRafId = null;
+    if (!state.fireworksActive) {
+      return;
     }
 
-    const period = span * 2;
-    const raw = (start - min) + velocity * elapsedSeconds;
-    const mod = ((raw % period) + period) % period;
-    if (mod <= span) {
-      return min + mod;
+    if (state.fireworksLastFrameMs === null) {
+      state.fireworksLastFrameMs = now;
     }
-    return max - (mod - span);
+
+    const deltaSec = Math.min(0.05, Math.max(0, (now - state.fireworksLastFrameMs) / 1000));
+    state.fireworksLastFrameMs = now;
+    updateFireworks(deltaSec);
+
+    if (state.fireworksActive) {
+      state.fireworksRafId = window.requestAnimationFrame(fireworksFrame);
+    }
   }
 
-  function computePreHitDeterministicPosition(remaining) {
-    resolvePreSegmentPath();
-    if (!state.dvdStartAnchor || !state.dvdPreSegmentVelocity) {
-      return { x: state.dvdPosition.x, y: state.dvdPosition.y };
-    }
-
-    const elapsed = Math.max(0, Math.min(PRE_HIT_SEGMENT_DURATION_SECONDS, DVD_START_SECONDS - remaining));
-    return {
-      x: reflectAxis(state.dvdStartAnchor.x, state.dvdPreSegmentVelocity.vx, elapsed, state.dvdBounds.minX, state.dvdBounds.maxX),
-      y: reflectAxis(state.dvdStartAnchor.y, state.dvdPreSegmentVelocity.vy, elapsed, state.dvdBounds.minY, state.dvdBounds.maxY)
-    };
+  function reflectUnit(start, velocity, elapsedSeconds) {
+    const unfolded = start + velocity * elapsedSeconds;
+    const phase = ((unfolded % 2) + 2) % 2;
+    return phase <= 1 ? phase : 2 - phase;
   }
 
-  function computePostHitPosition(remaining) {
-    resolvePostSegmentPath();
-    if (!state.dvdCornerTarget || !state.dvdPostSegmentVelocity) {
-      return { x: state.dvdPosition.x, y: state.dvdPosition.y };
-    }
-
-    const elapsedPostHit = Math.max(0, Math.min(FINAL_SEGMENT_DURATION_SECONDS, CORNER_HIT_SECONDS - remaining));
-    return {
-      x: reflectAxis(state.dvdCornerTarget.x, state.dvdPostSegmentVelocity.vx, elapsedPostHit, state.dvdBounds.minX, state.dvdBounds.maxX),
-      y: reflectAxis(state.dvdCornerTarget.y, state.dvdPostSegmentVelocity.vy, elapsedPostHit, state.dvdBounds.minY, state.dvdBounds.maxY)
-    };
-  }
-
-  function solveAxisVelocityToBoundary(start, min, max, targetIsMin, durationSeconds, desiredAbsSpeed) {
-    const span = Math.max(0, max - min);
-    if (span <= 0 || durationSeconds <= 0) {
+  function solveUnitVelocityToEdge(start, targetIsMin, durationSeconds, desiredSpeed) {
+    if (durationSeconds <= 0) {
       return 0;
     }
 
-    const u0 = start - min;
-    const period = span * 2;
-    const offset = targetIsMin ? 0 : span;
-
-    const roughPositive = (u0 + desiredAbsSpeed * durationSeconds - offset) / period;
-    const roughNegative = (u0 - desiredAbsSpeed * durationSeconds - offset) / period;
-
-    const candidates = [];
-    [roughPositive, roughNegative].forEach((rough) => {
-      const center = Math.round(rough);
-      for (let k = -2; k <= 2; k += 1) {
-        const m = center + k;
-        const unfoldedTarget = offset + m * period;
-        const velocity = (unfoldedTarget - u0) / durationSeconds;
-        if (!isFiniteNumber(velocity) || Math.abs(velocity) < 40) {
-          continue;
-        }
-        const deviation = Math.abs(Math.abs(velocity) - desiredAbsSpeed);
-        candidates.push({ velocity, deviation });
-      }
-    });
-
-    if (candidates.length === 0) {
-      return targetIsMin ? -desiredAbsSpeed : desiredAbsSpeed;
-    }
-
-    candidates.sort((a, b) => a.deviation - b.deviation);
-    return candidates[0].velocity;
-  }
-
-  function pickBestCornerPath(startPoint, durationSeconds, targetAbsSpeedX, targetAbsSpeedY) {
-    const corners = getCornerPoints();
+    // Unfolded, the target edge sits at edge + 2m; take the m whose speed is closest to desired.
+    const edge = targetIsMin ? 0 : 1;
+    const minSpeed = desiredSpeed * 0.2;
     let best = null;
 
-    corners.forEach((corner) => {
-      const targetXIsMin = corner.x <= state.dvdBounds.minX + 1;
-      const targetYIsMin = corner.y <= state.dvdBounds.minY + 1;
-      const vx = solveAxisVelocityToBoundary(
-        startPoint.x,
-        state.dvdBounds.minX,
-        state.dvdBounds.maxX,
-        targetXIsMin,
-        durationSeconds,
-        targetAbsSpeedX
-      );
-      const vy = solveAxisVelocityToBoundary(
-        startPoint.y,
-        state.dvdBounds.minY,
-        state.dvdBounds.maxY,
-        targetYIsMin,
-        durationSeconds,
-        targetAbsSpeedY
-      );
-
-      const endX = reflectAxis(
-        startPoint.x,
-        vx,
-        durationSeconds,
-        state.dvdBounds.minX,
-        state.dvdBounds.maxX
-      );
-      const endY = reflectAxis(
-        startPoint.y,
-        vy,
-        durationSeconds,
-        state.dvdBounds.minY,
-        state.dvdBounds.maxY
-      );
-
-      const cornerError = Math.hypot(endX - corner.x, endY - corner.y);
-      const speedPenalty = Math.abs(Math.abs(vx) - targetAbsSpeedX) + Math.abs(Math.abs(vy) - targetAbsSpeedY);
-      const score = cornerError * 120 + speedPenalty;
-
-      if (!best || score < best.score) {
-        best = { corner, vx, vy, score };
+    [1, -1].forEach((direction) => {
+      const center = Math.round((start + direction * desiredSpeed * durationSeconds - edge) / 2);
+      for (let k = -2; k <= 2; k += 1) {
+        const velocity = (edge + 2 * (center + k) - start) / durationSeconds;
+        if (Math.abs(velocity) < minSpeed) {
+          continue;
+        }
+        const deviation = Math.abs(Math.abs(velocity) - desiredSpeed);
+        if (!best || deviation < best.deviation) {
+          best = { velocity, deviation };
+        }
       }
     });
 
-    if (!best) {
-      return null;
+    return best ? best.velocity : (edge - start) / durationSeconds;
+  }
+
+  function pickBestCornerPath(start, durationSeconds, targetSpeedX, targetSpeedY) {
+    const spanX = Math.max(1, state.dvdBounds.maxX - state.dvdBounds.minX);
+    const spanY = Math.max(1, state.dvdBounds.maxY - state.dvdBounds.minY);
+    let best = null;
+
+    [0, 1].forEach((cornerU) => {
+      [0, 1].forEach((cornerV) => {
+        const velocity = {
+          u: solveUnitVelocityToEdge(start.u, cornerU === 0, durationSeconds, targetSpeedX / spanX),
+          v: solveUnitVelocityToEdge(start.v, cornerV === 0, durationSeconds, targetSpeedY / spanY)
+        };
+        const speedPenalty = (
+          Math.abs(Math.abs(velocity.u) * spanX - targetSpeedX) +
+          Math.abs(Math.abs(velocity.v) * spanY - targetSpeedY)
+        );
+
+        if (!best || speedPenalty < best.speedPenalty) {
+          best = { corner: { u: cornerU, v: cornerV }, velocity, speedPenalty };
+        }
+      });
+    });
+
+    return best;
+  }
+
+  function planDvdPath(anchor, anchorRemaining) {
+    const path = [];
+    let start = anchor;
+    let startRemaining = anchorRemaining;
+
+    DVD_CORNER_HITS.forEach((hit) => {
+      if (startRemaining <= hit.remainingSeconds) {
+        return;
+      }
+
+      const best = pickBestCornerPath(start, startRemaining - hit.remainingSeconds, hit.speedX, hit.speedY);
+      path.push({
+        startRemaining,
+        endRemaining: hit.remainingSeconds,
+        start,
+        velocity: best.velocity,
+        end: best.corner
+      });
+      start = best.corner;
+      startRemaining = hit.remainingSeconds;
+    });
+
+    state.dvdPath = path.length > 0 ? path : null;
+  }
+
+  function getDvdUnitPoint(remaining) {
+    const path = state.dvdPath;
+    const segment = path.find((candidate) => remaining > candidate.endRemaining);
+    if (!segment) {
+      return path[path.length - 1].end;
     }
 
+    const elapsed = segment.startRemaining - remaining;
     return {
-      corner: { x: best.corner.x, y: best.corner.y },
-      velocity: { vx: best.vx, vy: best.vy }
+      u: reflectUnit(segment.start.u, segment.velocity.u, elapsed),
+      v: reflectUnit(segment.start.v, segment.velocity.v, elapsed)
     };
   }
 
-  function resolvePreSegmentPath() {
-    if (!state.dvdStartAnchor) {
-      return;
-    }
-    if (state.dvdCornerTarget && state.dvdPreSegmentVelocity) {
-      return;
-    }
-
-    const path = pickBestCornerPath(
-      state.dvdStartAnchor,
-      PRE_HIT_SEGMENT_DURATION_SECONDS,
-      Math.abs(DVD_PRE_HIT_VX),
-      Math.abs(DVD_PRE_HIT_VY)
-    );
-    if (!path) {
-      return;
-    }
-
-    state.dvdCornerTarget = path.corner;
-    state.dvdPreSegmentVelocity = path.velocity;
-  }
-
-  function resolvePostSegmentPath() {
-    resolvePreSegmentPath();
-    if (!state.dvdCornerTarget) {
-      return;
-    }
-    if (state.dvdPostSegmentVelocity && state.dvdFinalCornerTarget) {
-      return;
-    }
-
-    const path = pickBestCornerPath(
-      state.dvdCornerTarget,
-      FINAL_SEGMENT_DURATION_SECONDS,
-      Math.abs(DVD_POST_HIT_VX),
-      Math.abs(DVD_POST_HIT_VY)
-    );
-    if (!path) {
-      return;
-    }
-
-    state.dvdFinalCornerTarget = path.corner;
-    state.dvdPostSegmentVelocity = path.velocity;
+  function getCornerKey(corner) {
+    return `${corner.v < 0.5 ? 't' : 'b'}${corner.u < 0.5 ? 'l' : 'r'}`;
   }
 
   function getCornerContact(position) {
@@ -899,21 +815,17 @@
     const atTop = Math.abs(position.y - state.dvdBounds.minY) <= PERFECT_CORNER_TOLERANCE_PX;
     const atBottom = Math.abs(position.y - state.dvdBounds.maxY) <= PERFECT_CORNER_TOLERANCE_PX;
 
-    const horizontal = atLeft ? 'l' : atRight ? 'r' : '';
-    const vertical = atTop ? 't' : atBottom ? 'b' : '';
-
-    if (!horizontal || !vertical) {
+    if (!(atLeft || atRight) || !(atTop || atBottom)) {
       return null;
     }
 
-    const x = atLeft ? state.dvdBounds.minX : state.dvdBounds.maxX;
-    const y = atTop ? state.dvdBounds.minY : state.dvdBounds.maxY;
-    return { x, y, key: `${vertical}${horizontal}` };
+    return { u: atLeft ? 0 : 1, v: atTop ? 0 : 1 };
   }
 
   function triggerCornerFireworks(corner, options = {}) {
     const now = performance.now();
     const withinCooldown = (
+      !options.force &&
       isFiniteNumber(state.dvdLastCornerFireworkMs) &&
       now - state.dvdLastCornerFireworkMs < CORNER_FIREWORK_COOLDOWN_MS
     );
@@ -922,9 +834,40 @@
       return;
     }
 
-    triggerFireworks(corner.x, corner.y, options);
+    // Burst from the screen corner the logo just hit, spraying back into the screen.
+    const viewport = getViewportSize();
+    const atLeft = corner.u < 0.5;
+    const atTop = corner.v < 0.5;
+    triggerFireworks(
+      atLeft ? DVD_EDGE_MARGIN : viewport.w - DVD_EDGE_MARGIN,
+      atTop ? DVD_EDGE_MARGIN : viewport.h - DVD_EDGE_MARGIN,
+      { ...options, direction: { x: atLeft ? 1 : -1, y: atTop ? 1 : -1 } }
+    );
     state.dvdLastCornerFireworkMs = now;
-    state.dvdCurrentCornerContactKey = corner.key;
+    state.dvdCurrentCornerContactKey = getCornerKey(corner);
+  }
+
+  function maybeTriggerPlannedCornerFireworks(remaining) {
+    const previous = state.lastRemainingPrecise;
+    // A +/- minute jump across a hit is not a hit.
+    if (!isFiniteNumber(previous) || previous - remaining > MAX_CORNER_HIT_STEP_SECONDS) {
+      return;
+    }
+
+    state.dvdPath.forEach((segment) => {
+      if (previous > segment.endRemaining && remaining <= segment.endRemaining) {
+        const isFinale = segment.endRemaining === FINAL_CORNER_HIT_SECONDS;
+        triggerCornerFireworks(segment.end, isFinale
+          ? {
+            force: true,
+            particleCount: FINAL_FIREWORK_PARTICLE_COUNT,
+            durationMs: FINAL_FIREWORK_DURATION_MS,
+            speedMultiplier: 1.42,
+            sizeMultiplier: 1.95
+          }
+          : { force: true });
+      }
+    });
   }
 
   function maybeTriggerPerfectCornerFireworks() {
@@ -934,64 +877,14 @@
       return;
     }
 
-    if (state.dvdCurrentCornerContactKey !== contact.key) {
+    if (state.dvdCurrentCornerContactKey !== getCornerKey(contact)) {
       triggerCornerFireworks(contact);
     }
   }
 
-  function updateDvdPhysics(remaining, deltaSec) {
-    let nextPosition;
-
-    if (remaining > CORNER_HIT_SECONDS) {
-      state.dvdCornerHitTriggered = false;
-      state.dvdFinalCornerHitTriggered = false;
-      nextPosition = computePreHitDeterministicPosition(remaining);
-    } else {
-      if (remaining > FINAL_CORNER_HIT_SECONDS) {
-        state.dvdFinalCornerHitTriggered = false;
-      }
-
-      if (!state.dvdCornerHitTriggered) {
-        resolvePreSegmentPath();
-        const crossedIntoCorner = isCornerHitMoment(remaining);
-        state.dvdCornerHitTriggered = true;
-        if (crossedIntoCorner && state.dvdCornerTarget) {
-          const contact = getCornerContact(state.dvdCornerTarget) || { ...state.dvdCornerTarget, key: 'corner' };
-          triggerCornerFireworks(contact);
-        }
-      }
-
-      nextPosition = computePostHitPosition(remaining);
-
-      if (!state.dvdFinalCornerHitTriggered && remaining <= FINAL_CORNER_HIT_SECONDS) {
-        resolvePostSegmentPath();
-        const crossedIntoFinalCorner = isFinalCornerHitMoment(remaining);
-        state.dvdFinalCornerHitTriggered = true;
-        if (state.dvdFinalCornerTarget) {
-          state.dvdPosition = { x: state.dvdFinalCornerTarget.x, y: state.dvdFinalCornerTarget.y };
-          nextPosition = { x: state.dvdFinalCornerTarget.x, y: state.dvdFinalCornerTarget.y };
-        }
-        const contact = state.dvdFinalCornerTarget
-          ? (getCornerContact(state.dvdFinalCornerTarget) || { ...state.dvdFinalCornerTarget, key: 'corner' })
-          : getCornerContact(nextPosition);
-        if (crossedIntoFinalCorner && contact) {
-          triggerCornerFireworks(contact, {
-            particleCount: FINAL_FIREWORK_PARTICLE_COUNT,
-            durationMs: FINAL_FIREWORK_DURATION_MS,
-            speedMultiplier: 1.42,
-            sizeMultiplier: 1.95
-          });
-        }
-      }
-    }
-
-    if (deltaSec > 0 && isFiniteNumber(state.dvdPosition.x) && isFiniteNumber(state.dvdPosition.y)) {
-      state.dvdVelocity.vx = (nextPosition.x - state.dvdPosition.x) / deltaSec;
-      state.dvdVelocity.vy = (nextPosition.y - state.dvdPosition.y) / deltaSec;
-    }
-
-    state.dvdPosition = nextPosition;
-    clampDvdPosition();
+  function updateDvdPhysics(remaining) {
+    state.dvdPosition = toScreenPoint(getDvdUnitPoint(remaining));
+    maybeTriggerPlannedCornerFireworks(remaining);
     maybeTriggerPerfectCornerFireworks();
     applyDvdPosition();
     state.lastRemainingPrecise = remaining;
@@ -1002,164 +895,108 @@
       window.cancelAnimationFrame(state.dvdRafId);
       state.dvdRafId = null;
     }
-    state.dvdLastFrameMs = null;
+  }
+
+  function scheduleDvdFrame() {
+    if (state.dvdRafId === null) {
+      state.dvdRafId = window.requestAnimationFrame(dvdFrame);
+    }
+  }
+
+  function clearDvdRunState() {
+    state.dvdPath = null;
+    state.lastRemainingPrecise = null;
+    cancelDvdReturnAnimation();
+    state.dvdCurrentCornerContactKey = null;
+    state.dvdLastCornerFireworkMs = null;
   }
 
   function resetDvdRunState() {
-    state.dvdCornerTarget = null;
-    state.dvdPreSegmentVelocity = null;
-    state.dvdCornerHitTriggered = false;
-    state.dvdFinalCornerTarget = null;
-    state.dvdFinalCornerHitTriggered = false;
-    state.dvdPostSegmentVelocity = null;
-    state.lastRemainingPrecise = null;
-    state.dvdReturningActive = false;
-    state.dvdReturnStartMs = null;
-    state.dvdReturnFrom = null;
-    state.dvdReturnTo = null;
-    state.dvdStartAnchor = null;
+    clearDvdRunState();
     state.lastObservedRemainingPrecise = null;
     state.lastMilestoneRemainingPrecise = null;
-    state.dvdCurrentCornerContactKey = null;
-    state.dvdLastCornerFireworkMs = null;
-    setDvdScaleImmediate(DVD_MAX_SCALE);
   }
 
-  function deactivateDvdPhase(preserveProgress) {
+  function deactivateDvdPhase() {
     state.dvdActive = false;
     stopDvdAnimationLoop();
     document.body.classList.remove('dvd-active');
-    clearFireworks();
-
-    if (!preserveProgress) {
-      resetDvdRunState();
-    }
+    clearDvdRunState();
   }
 
-  function ensureDvdReady() {
-    if (!elements.dvdLogoFloating) {
-      return;
-    }
-
-    updateDvdSize();
-    updateDvdBounds();
-
-    if (!state.dvdStartAnchor || !isFiniteNumber(state.dvdStartAnchor.x) || !isFiniteNumber(state.dvdStartAnchor.y)) {
-      const anchor = getHeaderLogoCenter();
-      state.dvdStartAnchor = {
-        x: Math.max(state.dvdBounds.minX, Math.min(state.dvdBounds.maxX, anchor.x)),
-        y: Math.max(state.dvdBounds.minY, Math.min(state.dvdBounds.maxY, anchor.y))
-      };
-    }
-
-    if (!isFiniteNumber(state.dvdPosition.x) || !isFiniteNumber(state.dvdPosition.y) || state.dvdPosition.x === 0 || state.dvdPosition.y === 0) {
-      state.dvdPosition = { x: state.dvdStartAnchor.x, y: state.dvdStartAnchor.y };
-    }
-
-    if (!isFiniteNumber(state.dvdVelocity.vx) || !isFiniteNumber(state.dvdVelocity.vy)) {
-      state.dvdVelocity = { vx: DVD_BASE_SPEED, vy: DVD_BASE_SPEED * 0.72 };
-    }
-
-    clampDvdPosition();
-    applyDvdPosition();
+  // Visible while running in the window, and frozen in place while paused inside it.
+  function shouldShowDvd(remaining) {
+    return isDvdPhaseRange(remaining) && (state.isRunning || state.dvdPath !== null);
   }
 
   function dvdFrame(now) {
+    state.dvdRafId = null;
     if (!state.dvdActive) {
       return;
     }
 
     const remaining = getRemainingSecondsPrecise();
-    if (state.dvdReturningActive) {
-      if (state.isRunning && isDvdPhaseRange(remaining)) {
-        state.dvdReturningActive = false;
-        state.dvdReturnStartMs = null;
-        state.dvdReturnFrom = null;
-        state.dvdReturnTo = null;
-        setDvdScaleImmediate(DVD_MIN_SCALE);
-        state.dvdLastFrameMs = now;
-      } else {
-        updateDvdScale(now);
-        const finished = updateDvdReturnAnimation(now);
-        if (finished) {
-          deactivateDvdPhase(false);
-          return;
-        }
-        state.dvdRafId = window.requestAnimationFrame(dvdFrame);
-        return;
-      }
-    }
-
-    const shouldReturnToCenter = (
-      state.mode === 'caseWork' &&
-      (
-        (state.isRunning && remaining <= DVD_END_SECONDS) ||
-        (!state.isRunning && state.remainingSeconds === 0)
-      )
-    );
-    if (shouldReturnToCenter) {
+    if (!shouldShowDvd(remaining)) {
       startDvdReturnAnimation(now);
-      state.dvdRafId = window.requestAnimationFrame(dvdFrame);
-      return;
+    } else if (state.dvdReturningActive) {
+      // Time was added back into the window mid-return; pick the bounce back up.
+      cancelDvdReturnAnimation();
+      if (!state.dvdPath) {
+        planDvdPath(toUnitPoint(state.dvdPosition), remaining);
+        state.lastRemainingPrecise = remaining;
+      }
+      beginDvdScaleTween(DVD_MIN_SCALE, DVD_SCALE_DOWN_MS, now);
     }
-
-    if (!state.isRunning || state.mode !== 'caseWork' || !isDvdPhaseRange(remaining)) {
-      const preserveProgress = !state.isRunning && isDvdPhaseRange(remaining) && state.mode === 'caseWork';
-      deactivateDvdPhase(preserveProgress);
-      return;
-    }
-
-    if (state.dvdLastFrameMs === null) {
-      state.dvdLastFrameMs = now;
-    }
-
-    const deltaSec = Math.min(0.05, Math.max(0, (now - state.dvdLastFrameMs) / 1000));
-    state.dvdLastFrameMs = now;
 
     updateDvdScale(now);
-    updateDvdPhysics(remaining, deltaSec);
-    updateFireworks(deltaSec);
 
-    state.dvdRafId = window.requestAnimationFrame(dvdFrame);
+    if (state.dvdReturningActive) {
+      if (updateDvdReturnAnimation(now)) {
+        deactivateDvdPhase();
+        return;
+      }
+      scheduleDvdFrame();
+      return;
+    }
+
+    updateDvdPhysics(remaining);
+
+    if (state.isRunning || state.dvdScaleAnimating) {
+      scheduleDvdFrame();
+    }
   }
 
   function activateDvdPhase(enteredFromStart) {
-    if (state.dvdActive) {
+    const wasActive = state.dvdActive;
+    if (!wasActive) {
+      state.dvdActive = true;
       document.body.classList.add('dvd-active');
-      return;
+      updateDvdSize();
+      updateDvdBounds();
     }
 
-    if (enteredFromStart) {
-      resetDvdRunState();
-      const anchor = getHeaderLogoCenter();
-      state.dvdStartAnchor = { x: anchor.x, y: anchor.y };
-    }
-
-    state.dvdActive = true;
-    document.body.classList.add('dvd-active');
-
-    ensureDvdReady();
-
-    if (state.lastRemainingPrecise === null) {
-      state.lastRemainingPrecise = getRemainingSecondsPrecise();
-    }
-
-    if (enteredFromStart) {
-      setDvdScaleImmediate(DVD_MAX_SCALE);
+    if (enteredFromStart || !state.dvdPath) {
+      // Lift off from wherever the logo is: the header mark, or mid-flight home.
+      const remaining = getRemainingSecondsPrecise();
+      if (!wasActive) {
+        state.dvdPosition = getHeaderLogoCenter();
+        setDvdScaleImmediate(getHeaderLogoScale());
+        applyDvdPosition();
+      }
+      cancelDvdReturnAnimation();
+      planDvdPath(toUnitPoint(state.dvdPosition), remaining);
+      state.lastRemainingPrecise = remaining;
+      state.dvdCurrentCornerContactKey = null;
       beginDvdScaleTween(DVD_MIN_SCALE, DVD_SCALE_DOWN_MS, performance.now());
-    } else if (!state.dvdReturningActive && !state.dvdScaleAnimating) {
+    } else if (!wasActive) {
       setDvdScaleImmediate(DVD_MIN_SCALE);
     }
 
-    applyDvdPosition();
-
-    stopDvdAnimationLoop();
-    state.dvdRafId = window.requestAnimationFrame(dvdFrame);
+    scheduleDvdFrame();
   }
 
   function updateDvdPhase() {
     const remaining = getRemainingSecondsPrecise();
-    const withinRange = isDvdPhaseRange(remaining);
     const crossedIntoDvd = (
       state.isRunning &&
       state.mode === 'caseWork' &&
@@ -1168,28 +1005,18 @@
       remaining <= DVD_START_SECONDS
     );
 
-    if (state.isRunning && withinRange) {
+    if (shouldShowDvd(remaining)) {
       activateDvdPhase(crossedIntoDvd);
       return;
     }
 
-    const shouldReturnToCenter = (
-      state.dvdActive &&
-      state.mode === 'caseWork' &&
-      (
-        (state.isRunning && remaining <= DVD_END_SECONDS) ||
-        (!state.isRunning && state.remainingSeconds === 0)
-      )
-    );
-    if (shouldReturnToCenter || state.dvdReturningActive) {
-      if (state.dvdRafId === null) {
-        state.dvdRafId = window.requestAnimationFrame(dvdFrame);
-      }
+    if (state.dvdActive) {
+      // dvdFrame flies the logo back into the header.
+      scheduleDvdFrame();
       return;
     }
 
-    const preserveProgress = !state.isRunning && withinRange;
-    deactivateDvdPhase(preserveProgress);
+    clearDvdRunState();
   }
 
   function handleViewportChange() {
@@ -1201,8 +1028,57 @@
 
     updateDvdSize();
     updateDvdBounds();
-    clampDvdPosition();
-    applyDvdPosition();
+
+    if (state.dvdReturningActive) {
+      state.dvdReturnTo = getHeaderLogoCenter();
+    } else if (state.dvdPath) {
+      state.dvdPosition = toScreenPoint(getDvdUnitPoint(getRemainingSecondsPrecise()));
+      applyDvdPosition();
+    }
+  }
+
+  function renderDocumentTitle() {
+    const isIdle = !state.isRunning && state.remainingSeconds === getModeDuration();
+    document.title = isIdle
+      ? BASE_TITLE
+      : `${formatTime(state.remainingSeconds)} · ${MODES[state.mode].label}`;
+  }
+
+  // Keeps the display awake while the timer runs; the browser drops the lock when the tab is hidden.
+  function syncWakeLock() {
+    if (!navigator.wakeLock) {
+      return;
+    }
+
+    const shouldHold = state.isRunning && document.visibilityState === 'visible';
+    if (!shouldHold) {
+      if (state.wakeLock) {
+        state.wakeLock.release().catch(() => {});
+        state.wakeLock = null;
+      }
+      return;
+    }
+
+    if (state.wakeLock || state.wakeLockRequest || state.wakeLockDenied) {
+      return;
+    }
+
+    state.wakeLockRequest = navigator.wakeLock.request('screen')
+      .then((lock) => {
+        state.wakeLockRequest = null;
+        state.wakeLock = lock;
+        lock.addEventListener('release', () => {
+          if (state.wakeLock === lock) {
+            state.wakeLock = null;
+          }
+        });
+        syncWakeLock();
+      })
+      .catch(() => {
+        // Retried on the next start or when the tab comes back into view.
+        state.wakeLockRequest = null;
+        state.wakeLockDenied = true;
+      });
   }
 
   function render() {
@@ -1227,6 +1103,8 @@
 
     updateFullscreenButtonLabel();
     renderStatus();
+    renderDocumentTitle();
+    syncWakeLock();
     maybePlayMilestoneChimes(remainingPrecise);
     updateDvdPhase();
     updateDinoScene();
@@ -1242,6 +1120,9 @@
   }
 
   function stopTimer() {
+    if (state.isRunning && state.endTimeMs > 0) {
+      state.pausedRemainingPrecise = Math.max(0, (state.endTimeMs - Date.now()) / 1000);
+    }
     syncRemainingFromClock();
     state.isRunning = false;
     clearTicking();
@@ -1278,6 +1159,7 @@
 
   function finishTimer() {
     state.remainingSeconds = 0;
+    state.pausedRemainingPrecise = null;
     state.isRunning = false;
     clearTicking();
     render();
@@ -1323,11 +1205,15 @@
 
     if (state.remainingSeconds <= 0) {
       state.remainingSeconds = getModeDuration();
+      state.pausedRemainingPrecise = null;
       resetDvdRunState();
     }
 
+    const startFromSeconds = getRemainingSecondsPrecise();
     state.isRunning = true;
-    state.endTimeMs = Date.now() + state.remainingSeconds * 1000;
+    state.endTimeMs = Date.now() + startFromSeconds * 1000;
+    state.pausedRemainingPrecise = null;
+    state.wakeLockDenied = false;
     clearTicking();
     state.intervalId = window.setInterval(tick, 200);
     render();
@@ -1336,6 +1222,7 @@
   function resetTimer() {
     stopTimer();
     state.remainingSeconds = getModeDuration();
+    state.pausedRemainingPrecise = null;
     resetDvdRunState();
     render();
   }
@@ -1348,6 +1235,7 @@
     stopTimer();
     state.mode = nextMode;
     state.remainingSeconds = getModeDuration();
+    state.pausedRemainingPrecise = null;
     resetDvdRunState();
     render();
   }
@@ -1370,6 +1258,9 @@
     }
 
     state.remainingSeconds = Math.max(0, state.remainingSeconds + deltaSeconds);
+    if (isFiniteNumber(state.pausedRemainingPrecise)) {
+      state.pausedRemainingPrecise = Math.max(0, state.pausedRemainingPrecise + deltaSeconds);
+    }
     render();
   }
 
@@ -1384,6 +1275,29 @@
       // Ignore fullscreen API rejections.
     }
     updateFullscreenButtonLabel();
+  }
+
+  function handleShortcut(event) {
+    if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey || typeof event.key !== 'string') {
+      return;
+    }
+
+    const shortcuts = {
+      ' ': toggleStartPause,
+      r: resetTimer,
+      f: toggleFullscreen
+    };
+    const action = shortcuts[event.key.toLowerCase()];
+    if (!action) {
+      return;
+    }
+
+    event.preventDefault();
+    // Otherwise Space would also click whichever button still has focus.
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    action();
   }
 
   function bindEvents() {
@@ -1409,6 +1323,15 @@
     });
 
     window.addEventListener('resize', handleViewportChange);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        state.wakeLockDenied = false;
+      }
+      syncWakeLock();
+    });
+
+    document.addEventListener('keydown', handleShortcut);
   }
 
   restoreState();
@@ -1416,7 +1339,9 @@
   resizeFireworksCanvas();
 
   if (state.isRunning && state.remainingSeconds > 0) {
-    state.endTimeMs = Date.now() + state.remainingSeconds * 1000;
+    if (state.endTimeMs <= 0) {
+      state.endTimeMs = Date.now() + state.remainingSeconds * 1000;
+    }
     clearTicking();
     state.intervalId = window.setInterval(tick, 200);
   }
