@@ -41,11 +41,10 @@
         <button class="control-button" id="fullscreenButton" type="button" aria-keyshortcuts="F" title="Fullscreen (F)">Fullscreen</button>
       </div>
 
-      <div class="final-five-scene" aria-hidden="true">
-        <div class="dino-gif-wrap">
-          <img src="assets/chrome-dino-runner.gif" alt="Chrome Dino animation" class="dino-gif">
-          <img src="assets/chrome-dino-still.png" alt="Chrome Dino still" class="dino-still">
-          <span class="dino-overlay-label">5 minutes left</span>
+      <div class="final-five-scene" id="dinoScene" aria-hidden="true">
+        <div class="dino-stage">
+          <canvas class="dino-canvas" id="dinoCanvas"></canvas>
+          <img src="assets/graphite-dino-sprites.png" alt="" id="dinoSprites" hidden>
         </div>
       </div>
     </section>
