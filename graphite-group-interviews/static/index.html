@@ -21,6 +21,13 @@
     </header>
 
     <section class="timer-card" aria-label="Timer">
+      <button class="sound-toggle" id="soundToggle" type="button" aria-label="Mute sounds" aria-pressed="false" aria-keyshortcuts="M" title="Mute sounds (M)">
+        <svg class="sound-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path class="sound-speaker" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path>
+          <path class="sound-waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"></path>
+          <path class="sound-off" d="M16 9.5l5 5M21 9.5l-5 5"></path>
+        </svg>
+      </button>
       <p class="timer-mode" id="timerModeLabel">Case Work</p>
       <div class="timer-display" id="timerDisplay" aria-live="polite">45:00</div>
       <div class="progress-track" aria-hidden="true">
